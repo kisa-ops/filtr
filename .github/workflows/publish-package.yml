@@ -1,0 +1,37 @@
+name: Publish Container Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Pre-built Docker Image Asset
+        run: |
+          curl -fSL -o filtr-docker-v1.0.0.tar.gz https://github.com/kisa-ops/filtr/releases/download/v1.0.0/filtr-docker-v1.0.0.tar.gz
+
+      - name: Load Docker Image
+        run: |
+          docker load < filtr-docker-v1.0.0.tar.gz
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and Push Image to GHCR
+        run: |
+          docker tag filtr:v1.0.0 ghcr.io/${{ github.repository }}:v1.0.0
+          docker tag filtr:v1.0.0 ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:v1.0.0
+          docker push ghcr.io/${{ github.repository }}:latest
