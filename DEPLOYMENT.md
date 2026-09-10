@@ -1,29 +1,75 @@
-# Enterprise Production Deployment Guide
+# Enterprise Production Deployment & Hardening Guide
 
 > **filtr** Official Distribution Repository: [`https://github.com/kisa-ops/filtr`](https://github.com/kisa-ops/filtr)
 
-This document provides hardening and deployment architectures for hosting **filtr** in production enterprise environments.
+This guide documents the enterprise hardening checklist, architectural patterns, and production deployment considerations for **filtr**.
 
 ---
 
-## Architecture
+## 1. Production Architecture Overview
 
 ```
-[ Clients / Browsers ]
-         |
-         v HTTPS (443)
-[ Enterprise Reverse Proxy / WAF (Nginx, Traefik, ALB, Caddy) ]
-         |
-         v HTTP (8080)
-[ filtr-app Container (Pre-compiled Nginx + Assets) ]
+                         [ End-User Client Browsers ]
+                                      |
+                                      v HTTPS (443)
+              +-----------------------------------------------+
+              |   Enterprise Perimeter / Ingress Controller   |
+              |     (Nginx / Traefik / AWS ALB / Cloudflare)   |
+              +-----------------------------------------------+
+                                      |
+                                      v HTTP (8080) or HTTPS (8443)
+                     [ filtr Container Runtime (Nginx) ]
+                                      |
+              +-----------------------------------------------+
+              |            In-Browser Web Crypto              |
+              |       (Client-Side AES-GCM + PBKDF2)          |
+              +-----------------------------------------------+
 ```
+
+### Key Security Principles
+1. **Zero-Trust Client Redaction**: All redactions and reversible vault encryptions execute inside the user's browser sandbox using the Web Cryptography API (`crypto.subtle`).
+2. **Zero Server-Side Retention**: The backend Nginx container acts purely as an immutable static asset delivery engine. No logs, user text, or unmasked tokens are ever retained or processed server-side.
+3. **Defense-in-Depth**: Hardened HTTP headers, TLS 1.3 encryption, and strict CSP policies.
 
 ---
 
-## Production Reverse Proxy Configurations
+## 2. Production Checklist & Considerations
 
-### Nginx with SSL/TLS
+Before deploying `filtr` to an enterprise environment, review the following checklist:
 
+| Category | Consideration | Recommended Configuration |
+|---|---|---|
+| **Port Allocation** | Choose a non-conflicting port for HTTP and HTTPS | Default `8080` (HTTP) and `8443` or `443` (HTTPS). |
+| **Network Interface** | Restrict binding if behind an ingress/proxy | Set `BIND_IP=127.0.0.1` when using a local reverse proxy. Use `0.0.0.0` for standalone LAN access. |
+| **SSL / TLS Termination** | Encrypt all traffic in transit | Terminate TLS either via built-in SSL (`./install.sh --ssl`) or at your corporate reverse proxy. |
+| **Host Persistence** | Auto-restart on server reboot | Enable the systemd service (`systemctl enable filtr.service`). |
+| **Log Management** | Prevent disk space exhaustion | Enforce Docker log rotation (`max-size: 10m`, `max-file: 3`). |
+| **Security Headers** | Prevent clickjacking and MIME attacks | Enforce `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, and `HSTS`. |
+| **Air-Gapped Operation** | Disconnected internal corporate networks | Use pre-built offline container packages (`filtr-docker-v1.0.0.tar.gz`). |
+
+---
+
+## 3. SSL / TLS Configuration Options
+
+### Option A: Built-in SSL via Installer
+The `install.sh` script can automatically configure SSL termination inside the container:
+
+```bash
+# Interactive SSL Setup
+./install.sh
+
+# Or unattended with self-signed certificate
+./install.sh --ssl --self-signed --ssl-port 8443 --ssl-domain filtr.corp.internal -y
+
+# Or unattended with custom corporate certificates
+./install.sh --ssl --ssl-cert /path/to/fullchain.pem --ssl-key /path/to/privkey.pem -y
+```
+
+### Option B: External Corporate Reverse Proxy (Recommended for Enterprise)
+
+If your enterprise terminates SSL at an external load balancer or reverse proxy:
+
+#### Nginx Configuration (`/etc/nginx/sites-available/filtr.conf`)
 ```nginx
 server {
     listen 80;
@@ -35,16 +81,17 @@ server {
     listen 443 ssl http2;
     server_name filtr.yourcompany.internal;
 
-    ssl_certificate /etc/ssl/certs/filtr.crt;
-    ssl_certificate_key /etc/ssl/private/filtr.key;
+    ssl_certificate /etc/ssl/certs/filtr_fullchain.pem;
+    ssl_certificate_key /etc/ssl/private/filtr_privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers on;
 
     # Security Headers
-    add_header X-Frame-Options "DENY" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';" always;
 
     location / {
         proxy_pass http://127.0.0.1:8080;
@@ -58,13 +105,13 @@ server {
 
 ---
 
-## Systemd Service (Auto-restart on Host Boot)
+## 4. Systemd Service (Automated Host Lifecycle)
 
-Create `/etc/systemd/system/filtr.service`:
+To ensure `filtr` starts automatically across system reboots, configure `/etc/systemd/system/filtr.service`:
 
 ```ini
 [Unit]
-Description=Filtr Enterprise Data Redaction Gateway
+Description=filtr Enterprise Data Redaction Gateway
 After=docker.service
 Requires=docker.service
 
@@ -80,15 +127,19 @@ TimeoutStartSec=0
 WantedBy=multi-user.target
 ```
 
-Enable and start:
+Commands:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now filtr.service
+sudo systemctl enable filtr.service
+sudo systemctl start filtr.service
+sudo systemctl status filtr.service
 ```
 
 ---
 
-## Kubernetes Deployment Manifest
+## 5. Kubernetes Deployment Manifest
+
+For Kubernetes environments, deploy with persistent healthchecks:
 
 ```yaml
 apiVersion: apps/v1
@@ -116,13 +167,13 @@ spec:
         - containerPort: 80
         livenessProbe:
           httpGet:
-            path: /
+            path: /healthz
             port: 80
           initialDelaySeconds: 10
           periodSeconds: 30
         readinessProbe:
           httpGet:
-            path: /
+            path: /healthz
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 10
@@ -151,15 +202,35 @@ spec:
 
 ---
 
-## Verification & Health Check
+## 6. Log Rotation & Disk Space
 
-Verify status:
+Docker container logs are constrained in `docker-compose.yml`:
+
+```yaml
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+This guarantees container logs never exceed 30MB total.
+
+---
+
+## 7. Verification & Health Monitoring
+
+To monitor container status and health:
+
 ```bash
-curl -I http://localhost:8080/
-```
-Expected output:
-```http
-HTTP/1.1 200 OK
+# Query health check
+curl -I http://localhost:8080/healthz
+
+# Container status
+docker compose ps
+
+# Container logs
+docker compose logs -f --tail=100
 ```
 
-Support: [https://github.com/kisa-ops/filtr](https://github.com/kisa-ops/filtr)
+Support & Issue Tracker: [https://github.com/kisa-ops/filtr/issues](https://github.com/kisa-ops/filtr/issues)
