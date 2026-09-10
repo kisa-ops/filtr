@@ -32,13 +32,18 @@ HTTP_PORT="8080"
 BIND_IP="0.0.0.0"
 ENABLE_SSL=false
 SSL_PORT="8443"
-SSL_MODE="" # "self-signed" or "custom"
+SSL_MODE="" # "self-signed", "path", or "paste"
 SSL_DOMAIN="localhost"
 SSL_CERT_PATH=""
 SSL_KEY_PATH=""
+SSL_CA_PATH=""
+SSL_CERT_CONTENT=""
+SSL_KEY_CONTENT=""
+SSL_CA_CONTENT=""
 SSL_REDIRECT=true
 INSTALL_SYSTEMD=false
 UNATTENDED=false
+UPDATE_SSL_ONLY=false
 
 # -----------------------------------------------------------------------------
 # CLI Arguments Parsing
@@ -58,10 +63,12 @@ show_help() {
     echo "      --ssl-domain <domain> Domain/IP for certificate (default: localhost)"
     echo "      --ssl-cert <file>     Path to custom SSL certificate (.crt / .pem)"
     echo "      --ssl-key <file>      Path to custom SSL private key (.key)"
+    echo "      --ssl-ca <file>       Path to Root or CA certificate (.crt / .pem)"
     echo "      --redirect-ssl        Redirect all HTTP traffic to HTTPS"
     echo "      --no-redirect-ssl     Do not redirect HTTP to HTTPS (dual mode)"
     echo "      --systemd             Install and enable systemd service"
     echo "      --no-systemd          Skip systemd service installation"
+    echo "      --update-ssl          Update SSL certificates on running instance"
     echo "  -y, --yes, --unattended   Run non-interactively using defaults or flags"
     echo "  -h, --help                Show this help message"
     echo
@@ -88,6 +95,8 @@ while [[ $# -gt 0 ]]; do
             ENABLE_SSL=true; SSL_MODE="custom"; SSL_CERT_PATH="$2"; shift 2 ;;
         --ssl-key)
             ENABLE_SSL=true; SSL_MODE="custom"; SSL_KEY_PATH="$2"; shift 2 ;;
+        --ssl-ca)
+            SSL_CA_PATH="$2"; shift 2 ;;
         --redirect-ssl)
             SSL_REDIRECT=true; shift ;;
         --no-redirect-ssl)
@@ -96,6 +105,8 @@ while [[ $# -gt 0 ]]; do
             INSTALL_SYSTEMD=true; shift ;;
         --no-systemd)
             INSTALL_SYSTEMD=false; shift ;;
+        --update-ssl)
+            UPDATE_SSL_ONLY=true; ENABLE_SSL=true; shift ;;
         -y|--yes|--unattended)
             UNATTENDED=true; shift ;;
         -h|--help)
@@ -118,6 +129,79 @@ echo -e "${BOLD}Enterprise Sensitive Data Redaction Gateway — ${VERSION}${NC}"
 echo -e "${GRAY}Distribution: https://github.com/kisa-ops/filtr${NC}"
 echo "=========================================================="
 echo
+
+# Helper function to prompt user for PEM input (File path or Paste)
+prompt_pem_input() {
+    local title="$1"
+    local target_var="$2"
+    local is_optional="${3:-false}"
+
+    echo
+    echo -e "${BOLD}${title}${NC}"
+    if [ "${is_optional}" = true ]; then
+        read -rp "Do you want to provide a ${title}? [y/N]: " PROVIDE_IT
+        if [[ ! "${PROVIDE_IT}" =~ ^[Yy]$ ]]; then
+            eval "${target_var}=''"
+            return 0
+        fi
+    fi
+
+    echo "Choose input method:"
+    echo "  1) Provide File Path (Absolute or relative)"
+    echo "  2) Paste PEM content directly in terminal"
+    while true; do
+        read -rp "Enter choice [1/2] (default: 1): " INPUT_CHOICE
+        INPUT_CHOICE="${INPUT_CHOICE:-1}"
+        if [ "${INPUT_CHOICE}" = "1" ]; then
+            while true; do
+                read -rp "Enter path to ${title} file: " GIVEN_PATH
+                if [ -f "${GIVEN_PATH}" ]; then
+                    local content
+                    content=$(cat "${GIVEN_PATH}")
+                    eval "${target_var}=\"\${content}\""
+                    success "${title} loaded from ${GIVEN_PATH}"
+                    break
+                else
+                    warn "File not found: ${GIVEN_PATH}. Please provide a valid file."
+                fi
+            done
+            break
+        elif [ "${INPUT_CHOICE}" = "2" ]; then
+            echo "Paste ${title} content below."
+            echo "(Include -----BEGIN... and -----END... tags, then press Enter and type 'EOF' on a newline):"
+            local pasted=""
+            while IFS= read -r line; do
+                if [ "$line" = "EOF" ]; then
+                    break
+                fi
+                pasted="${pasted}${line}
+"
+                if [[ "$line" =~ ^-----END[^-]+-----$ ]]; then
+                    break
+                fi
+            done
+            eval "${target_var}=\"\${pasted}\""
+            success "${title} received from terminal paste."
+            break
+        else
+            warn "Please enter 1 or 2."
+        fi
+    done
+}
+
+# Helper to check if a port is in use
+is_port_in_use() {
+    local check_port="$1"
+    if command -v ss >/dev/null 2>&1; then
+        ss -tuln | grep -q ":${check_port} " && return 0 || return 1
+    elif command -v netstat >/dev/null 2>&1; then
+        netstat -tuln | grep -q ":${check_port} " && return 0 || return 1
+    elif command -v lsof >/dev/null 2>&1; then
+        lsof -iTCP:"${check_port}" -sTCP:LISTEN >/dev/null 2>&1 && return 0 || return 1
+    else
+        return 1
+    fi
+}
 
 # -----------------------------------------------------------------------------
 # 1. Prerequisites Validation
@@ -145,24 +229,10 @@ fi
 
 success "Prerequisites verified (Docker & Compose ready)."
 
-# Helper to check if a port is in use
-is_port_in_use() {
-    local check_port="$1"
-    if command -v ss >/dev/null 2>&1; then
-        ss -tuln | grep -q ":${check_port} " && return 0 || return 1
-    elif command -v netstat >/dev/null 2>&1; then
-        netstat -tuln | grep -q ":${check_port} " && return 0 || return 1
-    elif command -v lsof >/dev/null 2>&1; then
-        lsof -iTCP:"${check_port}" -sTCP:LISTEN >/dev/null 2>&1 && return 0 || return 1
-    else
-        return 1
-    fi
-}
-
 # -----------------------------------------------------------------------------
 # 2. Interactive Configuration Prompts (if TTY and not unattended)
 # -----------------------------------------------------------------------------
-if [ -t 0 ] && [ "${UNATTENDED}" = false ]; then
+if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; then
     echo
     echo -e "${BOLD}--- [1/3] Network & Port Configuration ---${NC}"
     
@@ -217,9 +287,10 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ]; then
             fi
         done
 
+        echo
         echo "Select SSL Certificate Source:"
         echo "  1) Generate Self-Signed Certificate (Recommended for internal/staging)"
-        echo "  2) Provide Existing Custom SSL Certificate and Private Key"
+        echo "  2) Provide Custom SSL Certificate, Private Key, and optional Root/CA Certificate"
         while true; do
             read -rp "Enter choice [1/2] (default: 1): " SSL_CHOICE
             SSL_CHOICE="${SSL_CHOICE:-1}"
@@ -230,22 +301,9 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ]; then
                 break
             elif [ "${SSL_CHOICE}" = "2" ]; then
                 SSL_MODE="custom"
-                while true; do
-                    read -rp "Enter absolute path to SSL Certificate (.crt or fullchain.pem): " SSL_CERT_PATH
-                    if [ -f "${SSL_CERT_PATH}" ]; then
-                        break
-                    else
-                        warn "File not found: ${SSL_CERT_PATH}. Please provide a valid file."
-                    fi
-                done
-                while true; do
-                    read -rp "Enter absolute path to SSL Private Key (.key or privkey.pem): " SSL_KEY_PATH
-                    if [ -f "${SSL_KEY_PATH}" ]; then
-                        break
-                    else
-                        warn "File not found: ${SSL_KEY_PATH}. Please provide a valid file."
-                    fi
-                done
+                prompt_pem_input "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_CONTENT false
+                prompt_pem_input "SSL Private Key (.key / privkey.pem)" SSL_KEY_CONTENT false
+                prompt_pem_input "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_CONTENT true
                 break
             else
                 warn "Please enter 1 or 2."
@@ -268,14 +326,24 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ]; then
             INSTALL_SYSTEMD=true
         fi
     fi
+elif [ "${UPDATE_SSL_ONLY}" = true ] && [ -t 0 ]; then
+    echo -e "${BOLD}--- SSL / TLS Certificate Update Wizard ---${NC}"
+    ENABLE_SSL=true
+    prompt_pem_input "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_CONTENT false
+    prompt_pem_input "SSL Private Key (.key / privkey.pem)" SSL_KEY_CONTENT false
+    prompt_pem_input "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_CONTENT true
 fi
 
 # -----------------------------------------------------------------------------
-# 3. Environment & Configuration Writing (.env)
+# 3. Environment Configuration (.env)
 # -----------------------------------------------------------------------------
-info "Writing environment configuration (.env)..."
+info "Configuring environment (.env)..."
 
-cat << EOF > .env
+if [ -f .env ] && [ "${UPDATE_SSL_ONLY}" = true ]; then
+    # Preserve existing ports and only update SSL flags
+    sed -i "s|^SSL_ENABLED=.*|SSL_ENABLED=true|g" .env || echo "SSL_ENABLED=true" >> .env
+else
+    cat << EOF > .env
 # filtr Production Environment Configuration
 # Generated on: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
@@ -287,11 +355,12 @@ SSL_DOMAIN=${SSL_DOMAIN}
 SSL_REDIRECT=${SSL_REDIRECT}
 FILTR_IMAGE=${IMAGE_TAG}
 EOF
+fi
 
 success "Configuration saved to .env"
 
 # -----------------------------------------------------------------------------
-# 4. SSL Certificate Setup & Nginx Generation
+# 4. SSL Certificate Generation & ssl-info.json
 # -----------------------------------------------------------------------------
 mkdir -p ssl
 
@@ -309,21 +378,82 @@ if [ "${ENABLE_SSL}" = true ]; then
         chmod 600 ssl/key.pem
         chmod 644 ssl/cert.pem
         success "Self-signed certificate generated in ./ssl/ (valid for 365 days)."
-    elif [ "${SSL_MODE}" = "custom" ]; then
+    elif [ -n "${SSL_CERT_CONTENT}" ] && [ -n "${SSL_KEY_CONTENT}" ]; then
         info "Installing custom SSL certificates..."
-        cp -f "${SSL_CERT_PATH}" ssl/cert.pem
+        # If CA is provided, combine Server Cert + CA Cert into cert.pem for complete browser chain
+        if [ -n "${SSL_CA_CONTENT}" ]; then
+            echo -e "${SSL_CERT_CONTENT}\n\n${SSL_CA_CONTENT}" > ssl/cert.pem
+            echo "${SSL_CA_CONTENT}" > ssl/ca.pem
+            chmod 644 ssl/ca.pem
+            success "Root/CA certificate attached to certificate chain."
+        else
+            echo "${SSL_CERT_CONTENT}" > ssl/cert.pem
+        fi
+        echo "${SSL_KEY_CONTENT}" > ssl/key.pem
+        chmod 600 ssl/key.pem
+        chmod 644 ssl/cert.pem
+        success "Custom certificate and private key installed into ./ssl/"
+    elif [ -n "${SSL_CERT_PATH}" ] && [ -n "${SSL_KEY_PATH}" ]; then
+        info "Copying SSL certificates from provided file paths..."
+        if [ -n "${SSL_CA_PATH}" ] && [ -f "${SSL_CA_PATH}" ]; then
+            cat "${SSL_CERT_PATH}" "${SSL_CA_PATH}" > ssl/cert.pem
+            cp -f "${SSL_CA_PATH}" ssl/ca.pem
+            chmod 644 ssl/ca.pem
+            success "Root/CA certificate attached to certificate chain."
+        else
+            cp -f "${SSL_CERT_PATH}" ssl/cert.pem
+        fi
         cp -f "${SSL_KEY_PATH}" ssl/key.pem
         chmod 600 ssl/key.pem
         chmod 644 ssl/cert.pem
-        success "Custom certificates installed into ./ssl/"
+        success "Certificates copied to ./ssl/"
     fi
 
-    # Generate Nginx configuration with SSL
+    # Generate ssl-info.json for Admin Portal diagnostics
+    if command -v openssl >/dev/null 2>&1 && [ -f ssl/cert.pem ]; then
+        info "Extracting certificate metadata for Admin Portal..."
+        SUBJ=$(openssl x509 -in ssl/cert.pem -noout -subject 2>/dev/null | sed 's/^subject=//' | xargs || echo "CN=${SSL_DOMAIN}")
+        ISSUER=$(openssl x509 -in ssl/cert.pem -noout -issuer 2>/dev/null | sed 's/^issuer=//' | xargs || echo "Enterprise CA")
+        STARTDATE=$(openssl x509 -in ssl/cert.pem -noout -startdate 2>/dev/null | sed 's/^notBefore=//' | xargs || echo "")
+        ENDDATE=$(openssl x509 -in ssl/cert.pem -noout -enddate 2>/dev/null | sed 's/^notAfter=//' | xargs || echo "")
+        FINGERPRINT=$(openssl x509 -in ssl/cert.pem -noout -fingerprint -sha256 2>/dev/null | sed 's/^SHA256 Fingerprint=//' | xargs || echo "")
+        SERIAL=$(openssl x509 -in ssl/cert.pem -noout -serial 2>/dev/null | sed 's/^serial=//' | xargs || echo "")
+        HAS_CA=false
+        CA_SUBJ=""
+        if [ -f ssl/ca.pem ]; then
+            HAS_CA=true
+            CA_SUBJ=$(openssl x509 -in ssl/ca.pem -noout -subject 2>/dev/null | sed 's/^subject=//' | xargs || echo "")
+        fi
+
+        cat << EOF > ssl/ssl-info.json
+{
+  "installed": true,
+  "subject": "${SUBJ}",
+  "issuer": "${ISSUER}",
+  "validFrom": "${STARTDATE}",
+  "validTo": "${ENDDATE}",
+  "fingerprint": "${FINGERPRINT}",
+  "serial": "${SERIAL}",
+  "hasCaCert": ${HAS_CA},
+  "caSubject": "${CA_SUBJ}",
+  "updatedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
+EOF
+        chmod 644 ssl/ssl-info.json
+        success "Certificate metadata saved to ./ssl/ssl-info.json"
+    fi
+
+    # Generate hardened Nginx configuration
     info "Generating hardened Nginx SSL configuration..."
     if [ "${SSL_REDIRECT}" = true ]; then
         HTTP_ACTION="return 301 https://\$host:${SSL_PORT}\$request_uri;"
     else
         HTTP_ACTION="try_files \$uri \$uri/ /index.html;"
+    fi
+
+    TRUSTED_CA_DIRECTIVE=""
+    if [ -f ssl/ca.pem ]; then
+        TRUSTED_CA_DIRECTIVE="ssl_trusted_certificate /etc/nginx/ssl/ca.pem;"
     fi
 
     cat << EOF > nginx.conf
@@ -381,6 +511,13 @@ http {
             return 200 "healthy\n";
         }
 
+        # Certificate status endpoint for Admin Portal
+        location /ssl-info.json {
+            alias /etc/nginx/ssl/ssl-info.json;
+            default_type application/json;
+            add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+        }
+
         location / {
             ${HTTP_ACTION}
         }
@@ -395,6 +532,7 @@ http {
 
         ssl_certificate     /etc/nginx/ssl/cert.pem;
         ssl_certificate_key /etc/nginx/ssl/key.pem;
+        ${TRUSTED_CA_DIRECTIVE}
 
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_ciphers HIGH:!aNULL:!MD5;
@@ -416,6 +554,13 @@ http {
             access_log off;
             default_type text/plain;
             return 200 "healthy\n";
+        }
+
+        # Certificate status endpoint for Admin Portal
+        location /ssl-info.json {
+            alias /etc/nginx/ssl/ssl-info.json;
+            default_type application/json;
+            add_header Cache-Control "no-store, no-cache, must-revalidate" always;
         }
 
         location /assets/ {
@@ -448,7 +593,7 @@ http {
 }
 EOF
 
-    # Create docker-compose.override.yml for SSL mounts and port
+    # Create docker-compose.override.yml
     cat << EOF > docker-compose.override.yml
 services:
   filtr:
@@ -463,6 +608,19 @@ else
     # SSL Disabled: Remove override file if previously created
     rm -f docker-compose.override.yml
     info "Running standard HTTP mode (SSL disabled)."
+fi
+
+# If updating SSL on already running container, hot reload and exit cleanly
+if [ "${UPDATE_SSL_ONLY}" = true ]; then
+    info "Hot reloading running Nginx service..."
+    if ${COMPOSE_CMD} ps | grep -q "filtr"; then
+        ${COMPOSE_CMD} exec filtr nginx -s reload 2>/dev/null || ${COMPOSE_CMD} restart filtr
+        success "SSL certificates updated and Nginx reloaded successfully!"
+    else
+        ${COMPOSE_CMD} up -d
+        success "Container started with updated SSL certificates."
+    fi
+    exit 0
 fi
 
 # -----------------------------------------------------------------------------
@@ -507,7 +665,7 @@ fi
 # -----------------------------------------------------------------------------
 info "Starting ${APP_NAME} production container..."
 
-# Check if an existing container with the name 'filtr-app' exists from outside this compose project
+# Avoid container name collisions with outside containers
 if docker ps -a --format '{{.Names}}' | grep -Eq "^filtr-app$"; then
     info "Stopping existing filtr-app container..."
     docker stop filtr-app >/dev/null 2>&1 || true
@@ -613,6 +771,7 @@ echo
 echo -e "${BOLD}Operational Commands:${NC}"
 echo "  • View live logs:       ${COMPOSE_CMD} logs -f"
 echo "  • Check container:      ${COMPOSE_CMD} ps"
+echo "  • Update SSL certs:     ./install.sh --update-ssl"
 echo "  • Restart stack:        ${COMPOSE_CMD} restart"
 echo "  • Stop stack:           ${COMPOSE_CMD} down"
 echo "  • Upgrade to latest:    ./upgrade.sh"
