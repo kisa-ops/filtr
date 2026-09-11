@@ -45,7 +45,8 @@ Before deploying `filtr` to an enterprise environment, review the following chec
 | **Host Persistence** | Auto-restart on server reboot | Enable the systemd service (`systemctl enable filtr.service`). |
 | **Log Management** | Prevent disk space exhaustion | Enforce Docker log rotation (`max-size: 10m`, `max-file: 3`). |
 | **Security Headers** | Prevent clickjacking and MIME attacks | Enforce `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, and `HSTS`. |
-| **Air-Gapped Operation** | Disconnected internal corporate networks | Use pre-built offline container packages (`filtr-docker-v1.0.0.tar.gz`). |
+| **Air-Gapped Operation** | Disconnected internal corporate networks | Use pre-built offline container packages (`filtr-docker-v1.3.0.tar.gz`). |
+| **Lifecycle & Rollbacks** | Zero-downtime maintenance and rollback | Use `./upgrade.sh --version <tag>` or `./upgrade.sh --rollback <tag>`. |
 
 ---
 
@@ -62,7 +63,7 @@ The `install.sh` script can automatically configure SSL termination inside the c
 ./install.sh --ssl --self-signed --ssl-port 8443 --ssl-domain filtr.corp.internal -y
 
 # Or unattended with custom corporate certificates
-./install.sh --ssl --ssl-cert /path/to/fullchain.pem --ssl-key /path/to/privkey.pem -y
+./install.sh --ssl --ssl-cert /path/to/fullchain.pem --ssl-key /path/to/privkey.pem --ssl-ca /path/to/rootCA.pem -y
 ```
 
 ### Option B: External Corporate Reverse Proxy (Recommended for Enterprise)
@@ -105,7 +106,30 @@ server {
 
 ---
 
-## 4. Systemd Service (Automated Host Lifecycle)
+## 4. Upgrades, Rollbacks & Disaster Recovery
+
+`filtr` supports zero-downtime rolling container updates without data loss.
+
+### Upgrading to Latest Version
+```bash
+./upgrade.sh
+```
+
+### Upgrading to a Specific Version
+```bash
+./upgrade.sh --version v1.3.0
+```
+
+### Emergency Stack Rollback
+If an unexpected regression or configuration error occurs, immediately roll back to a known stable release:
+```bash
+./upgrade.sh --rollback v1.2.0
+```
+This updates `.env`, re-loads the designated container version, recreates the container stack, and runs liveness checks against `/healthz`.
+
+---
+
+## 5. Systemd Service (Automated Host Lifecycle)
 
 To ensure `filtr` starts automatically across system reboots, configure `/etc/systemd/system/filtr.service`:
 
@@ -137,7 +161,7 @@ sudo systemctl status filtr.service
 
 ---
 
-## 5. Kubernetes Deployment Manifest
+## 6. Kubernetes Deployment Manifest
 
 For Kubernetes environments, deploy with persistent healthchecks:
 
@@ -161,7 +185,7 @@ spec:
     spec:
       containers:
       - name: filtr
-        image: ghcr.io/kisa-ops/filtr:v1.0.0
+        image: ghcr.io/kisa-ops/filtr:v1.3.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -202,7 +226,7 @@ spec:
 
 ---
 
-## 6. Log Rotation & Disk Space
+## 7. Log Rotation & Disk Space
 
 Docker container logs are constrained in `docker-compose.yml`:
 
@@ -218,7 +242,7 @@ This guarantees container logs never exceed 30MB total.
 
 ---
 
-## 7. Verification & Health Monitoring
+## 8. Verification & Health Monitoring
 
 To monitor container status and health:
 
