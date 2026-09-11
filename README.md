@@ -19,6 +19,9 @@
 
 ## Quick Start (Installation)
 
+> [!TIP]
+> For a complete step-by-step walkthrough of the interactive installer, custom SSL/TLS setup (with Root/CA certificate chains), and operational runbooks, refer to the [Production Installation Guide (INSTALLATION.md)](./INSTALLATION.md).
+
 ### Option 1: Interactive Installer (Recommended)
 
 Clone the repository and run the automated installation wizard:
