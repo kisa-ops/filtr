@@ -5,6 +5,15 @@ services:
     restart: unless-stopped
     ports:
       - "${BIND_IP:-0.0.0.0}:${PORT:-8080}:80"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
     logging:
       driver: "json-file"
       options:
