@@ -125,7 +125,7 @@ echo "  ██╔══╝  ██║██║     ██║   ██╔══�
 echo "  ██║     ██║███████╗██║   ██║  ██║"
 echo "  ╚═╝     ╚═╝╚══════╝╚═╝   ╚═╝  ╚═╝"
 echo -e "${NC}"
-echo -e "${BOLD}Enterprise Sensitive Data Redaction Gateway — ${VERSION}${NC}"
+echo -e "${BOLD}Enterprise Sensitive Data Redaction Platform — ${VERSION}${NC}"
 echo -e "${GRAY}Distribution: https://github.com/kisa-ops/filtr${NC}"
 echo "=========================================================="
 echo
@@ -684,7 +684,7 @@ if [ "${INSTALL_SYSTEMD}" = true ]; then
     DOCKER_BIN="$(command -v docker)"
 
     SYSTEMD_CONTENT="[Unit]
-Description=filtr - Enterprise Privacy Gateway
+Description=filtr - Data Redaction Platform
 After=docker.service
 Requires=docker.service
 
