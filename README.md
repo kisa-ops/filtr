@@ -135,3 +135,20 @@ Refer to [`DEPLOYMENT.md`](./DEPLOYMENT.md) for full reverse-proxy templates (Ng
 Maintained and distributed by **kisa-ops**.  
 Repository: [https://github.com/kisa-ops/filtr](https://github.com/kisa-ops/filtr)  
 Issue Tracker: [https://github.com/kisa-ops/filtr/issues](https://github.com/kisa-ops/filtr/issues)
+
+---
+
+## SSL / TLS Certificate Management
+
+`filtr` includes enterprise SSL/TLS certificate management accessible both via terminal scripts and directly inside the web **Admin Portal**:
+
+- **Certificate Chain Support**: Server Certificate (`.crt` / `.pem`), Private Key (`.key` / `.pem`), and optional Root or CA Certificate (`ca.pem` / `rootCA.crt`).
+- **Flexible Ingestion**: Provide absolute file paths or paste PEM text blocks directly into the terminal or Admin Portal interface.
+- **Diagnostics & Status**: Live display of Subject (CN), Certificate Authority (Issuer), Validity Window, SHA-256 Fingerprint, and Root CA chain status.
+- **Zero-Downtime Hot Reload**:
+  ```bash
+  # Update certificates interactively at any time:
+  ./manage-ssl.sh
+  # Or via installer:
+  ./install.sh --update-ssl
+  ```

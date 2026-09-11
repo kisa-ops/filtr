@@ -27,19 +27,35 @@ success() { echo -e "${GREEN}[+]${NC} ${BOLD}$*${NC}"; }
 warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
 error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 
-# Default Options
+# Determine default installation directory
+# If user is in /tmp or /var/tmp or executing via pipe, default to /opt/filtr
+CURRENT_DIR="$(pwd)"
+if [[ "${CURRENT_DIR}" == /tmp* ]] || [[ "${CURRENT_DIR}" == /var/tmp* ]]; then
+    if [ "$(id -u)" -eq 0 ] || command -v sudo >/dev/null 2>&1; then
+        DEFAULT_INSTALL_DIR="/opt/filtr"
+    else
+        DEFAULT_INSTALL_DIR="${HOME}/filtr"
+    fi
+elif [ -f "./docker-compose.yml" ] && [ -f "./install.sh" ]; then
+    DEFAULT_INSTALL_DIR="${CURRENT_DIR}"
+else
+    if [ "$(id -u)" -eq 0 ] || command -v sudo >/dev/null 2>&1; then
+        DEFAULT_INSTALL_DIR="/opt/filtr"
+    else
+        DEFAULT_INSTALL_DIR="${HOME}/filtr"
+    fi
+fi
+
+INSTALL_DIR="${DEFAULT_INSTALL_DIR}"
 HTTP_PORT="8080"
 BIND_IP="0.0.0.0"
 ENABLE_SSL=false
 SSL_PORT="8443"
-SSL_MODE="" # "self-signed", "path", or "paste"
+SSL_MODE="" # "self-signed" or "custom"
 SSL_DOMAIN="localhost"
 SSL_CERT_PATH=""
 SSL_KEY_PATH=""
 SSL_CA_PATH=""
-SSL_CERT_CONTENT=""
-SSL_KEY_CONTENT=""
-SSL_CA_CONTENT=""
 SSL_REDIRECT=true
 INSTALL_SYSTEMD=false
 UNATTENDED=false
@@ -54,6 +70,7 @@ show_help() {
     echo "Usage: ./install.sh [options]"
     echo
     echo "Options:"
+    echo "  -d, --install-dir <path>  Target installation directory (default: /opt/filtr or current dir)"
     echo "  -p, --port <port>         Set HTTP port (default: 8080)"
     echo "  -b, --bind <ip>           Set bind address (default: 0.0.0.0)"
     echo "      --ssl                 Enable SSL/TLS encryption"
@@ -77,6 +94,8 @@ show_help() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -d|--dir|--install-dir)
+            INSTALL_DIR="$2"; shift 2 ;;
         -p|--port)
             HTTP_PORT="$2"; shift 2 ;;
         -b|--bind)
@@ -130,14 +149,13 @@ echo -e "${GRAY}Distribution: https://github.com/kisa-ops/filtr${NC}"
 echo "=========================================================="
 echo
 
-# Helper function to prompt user for PEM input (File path or Paste)
-prompt_pem_input() {
+# Helper function to prompt user for a valid file path
+prompt_file_path() {
     local title="$1"
     local target_var="$2"
     local is_optional="${3:-false}"
 
     echo
-    echo -e "${BOLD}${title}${NC}"
     if [ "${is_optional}" = true ]; then
         read -rp "Do you want to provide a ${title}? [y/N]: " PROVIDE_IT
         if [[ ! "${PROVIDE_IT}" =~ ^[Yy]$ ]]; then
@@ -146,45 +164,14 @@ prompt_pem_input() {
         fi
     fi
 
-    echo "Choose input method:"
-    echo "  1) Provide File Path (Absolute or relative)"
-    echo "  2) Paste PEM content directly in terminal"
     while true; do
-        read -rp "Enter choice [1/2] (default: 1): " INPUT_CHOICE
-        INPUT_CHOICE="${INPUT_CHOICE:-1}"
-        if [ "${INPUT_CHOICE}" = "1" ]; then
-            while true; do
-                read -rp "Enter path to ${title} file: " GIVEN_PATH
-                if [ -f "${GIVEN_PATH}" ]; then
-                    local content
-                    content=$(cat "${GIVEN_PATH}")
-                    eval "${target_var}=\"\${content}\""
-                    success "${title} loaded from ${GIVEN_PATH}"
-                    break
-                else
-                    warn "File not found: ${GIVEN_PATH}. Please provide a valid file."
-                fi
-            done
-            break
-        elif [ "${INPUT_CHOICE}" = "2" ]; then
-            echo "Paste ${title} content below."
-            echo "(Include -----BEGIN... and -----END... tags, then press Enter and type 'EOF' on a newline):"
-            local pasted=""
-            while IFS= read -r line; do
-                if [ "$line" = "EOF" ]; then
-                    break
-                fi
-                pasted="${pasted}${line}
-"
-                if [[ "$line" =~ ^-----END[^-]+-----$ ]]; then
-                    break
-                fi
-            done
-            eval "${target_var}=\"\${pasted}\""
-            success "${title} received from terminal paste."
+        read -rp "Enter path to ${title} file: " GIVEN_PATH
+        if [ -f "${GIVEN_PATH}" ]; then
+            eval "${target_var}=\"\${GIVEN_PATH}\""
+            success "${title} found at: ${GIVEN_PATH}"
             break
         else
-            warn "Please enter 1 or 2."
+            warn "File not found: ${GIVEN_PATH}. Please provide a valid file path."
         fi
     done
 }
@@ -234,7 +221,12 @@ success "Prerequisites verified (Docker & Compose ready)."
 # -----------------------------------------------------------------------------
 if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; then
     echo
-    echo -e "${BOLD}--- [1/3] Network & Port Configuration ---${NC}"
+    echo -e "${BOLD}--- [1/4] Installation Directory ---${NC}"
+    read -rp "Enter installation directory [default: ${INSTALL_DIR}]: " INPUT_DIR
+    INSTALL_DIR="${INPUT_DIR:-${INSTALL_DIR}}"
+
+    echo
+    echo -e "${BOLD}--- [2/4] Network & Port Configuration ---${NC}"
     
     # Read HTTP Port
     while true; do
@@ -262,7 +254,7 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; 
     BIND_IP="${INPUT_BIND:-${BIND_IP}}"
 
     echo
-    echo -e "${BOLD}--- [2/3] SSL / TLS Security Configuration ---${NC}"
+    echo -e "${BOLD}--- [3/4] SSL / TLS Security Configuration ---${NC}"
     read -rp "Enable HTTPS / SSL encryption? [y/N]: " ASK_SSL
     if [[ "${ASK_SSL}" =~ ^[Yy]$ ]]; then
         ENABLE_SSL=true
@@ -301,9 +293,9 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; 
                 break
             elif [ "${SSL_CHOICE}" = "2" ]; then
                 SSL_MODE="custom"
-                prompt_pem_input "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_CONTENT false
-                prompt_pem_input "SSL Private Key (.key / privkey.pem)" SSL_KEY_CONTENT false
-                prompt_pem_input "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_CONTENT true
+                prompt_file_path "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_PATH false
+                prompt_file_path "SSL Private Key (.key / privkey.pem)" SSL_KEY_PATH false
+                prompt_file_path "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_PATH true
                 break
             else
                 warn "Please enter 1 or 2."
@@ -319,7 +311,7 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; 
     fi
 
     echo
-    echo -e "${BOLD}--- [3/3] Production System Integration ---${NC}"
+    echo -e "${BOLD}--- [4/4] Production System Integration ---${NC}"
     if command -v systemctl >/dev/null 2>&1; then
         read -rp "Install and enable systemd service (auto-starts on system boot)? [y/N]: " ASK_SYSTEMD
         if [[ "${ASK_SYSTEMD}" =~ ^[Yy]$ ]]; then
@@ -329,15 +321,69 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; 
 elif [ "${UPDATE_SSL_ONLY}" = true ] && [ -t 0 ]; then
     echo -e "${BOLD}--- SSL / TLS Certificate Update Wizard ---${NC}"
     ENABLE_SSL=true
-    prompt_pem_input "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_CONTENT false
-    prompt_pem_input "SSL Private Key (.key / privkey.pem)" SSL_KEY_CONTENT false
-    prompt_pem_input "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_CONTENT true
+    prompt_file_path "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_PATH false
+    prompt_file_path "SSL Private Key (.key / privkey.pem)" SSL_KEY_PATH false
+    prompt_file_path "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_PATH true
 fi
 
 # -----------------------------------------------------------------------------
-# 3. Environment Configuration (.env)
+# 3. Setup Dedicated Installation Directory
 # -----------------------------------------------------------------------------
-info "Configuring environment (.env)..."
+info "Setting up installation directory: ${INSTALL_DIR}..."
+
+# Create directory with appropriate permissions
+if [ ! -d "${INSTALL_DIR}" ]; then
+    if mkdir -p "${INSTALL_DIR}" 2>/dev/null; then
+        :
+    elif [ "$(id -u)" -eq 0 ]; then
+        mkdir -p "${INSTALL_DIR}"
+    elif command -v sudo >/dev/null 2>&1; then
+        if [ -t 0 ] && [ "${UNATTENDED}" = false ]; then
+            info "Attempting to create ${INSTALL_DIR} with sudo..."
+            if sudo mkdir -p "${INSTALL_DIR}" 2>/dev/null && sudo chown -R "$(id -u):$(id -g)" "${INSTALL_DIR}" 2>/dev/null; then
+                success "Created ${INSTALL_DIR}"
+            else
+                warn "Could not create ${INSTALL_DIR} with sudo. Falling back to user home directory: ${HOME}/filtr"
+                INSTALL_DIR="${HOME}/filtr"
+                mkdir -p "${INSTALL_DIR}"
+            fi
+        else
+            INSTALL_DIR="${HOME}/filtr"
+            info "Falling back to user home directory: ${INSTALL_DIR}"
+            mkdir -p "${INSTALL_DIR}"
+        fi
+    else
+        warn "Cannot create ${INSTALL_DIR} without elevated privileges."
+        INSTALL_DIR="${HOME}/filtr"
+        info "Falling back to user home directory: ${INSTALL_DIR}"
+        mkdir -p "${INSTALL_DIR}"
+    fi
+fi
+
+# Copy existing repo assets if running from a git clone or /tmp
+SRC_DIR="${CURRENT_DIR}"
+if [ "${SRC_DIR}" != "${INSTALL_DIR}" ]; then
+    [ -f "${SRC_DIR}/docker-compose.yml" ] && cp -f "${SRC_DIR}/docker-compose.yml" "${INSTALL_DIR}/"
+    [ -f "${SRC_DIR}/upgrade.sh" ] && cp -f "${SRC_DIR}/upgrade.sh" "${INSTALL_DIR}/"
+    [ -f "${SRC_DIR}/manage-ssl.sh" ] && cp -f "${SRC_DIR}/manage-ssl.sh" "${INSTALL_DIR}/"
+    if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+        cp -f "${BASH_SOURCE[0]}" "${INSTALL_DIR}/install.sh"
+        chmod +x "${INSTALL_DIR}/install.sh"
+    fi
+fi
+
+# Change working directory to the target installation directory
+cd "${INSTALL_DIR}"
+
+# Ensure install.sh exists in target directory (e.g. if installed via curl pipe)
+if [ ! -f ./install.sh ]; then
+    curl -fsSL "https://raw.githubusercontent.com/kisa-ops/filtr/main/install.sh" -o ./install.sh 2>/dev/null && chmod +x ./install.sh || true
+fi
+
+# -----------------------------------------------------------------------------
+# 4. Environment Configuration (.env & docker-compose.yml)
+# -----------------------------------------------------------------------------
+info "Configuring environment in ${INSTALL_DIR}..."
 
 if [ -f .env ] && [ "${UPDATE_SSL_ONLY}" = true ]; then
     # Preserve existing ports and only update SSL flags
@@ -345,6 +391,7 @@ if [ -f .env ] && [ "${UPDATE_SSL_ONLY}" = true ]; then
 else
     cat << EOF > .env
 # filtr Production Environment Configuration
+# Installed in: ${INSTALL_DIR}
 # Generated on: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 PORT=${HTTP_PORT}
@@ -357,10 +404,96 @@ FILTR_IMAGE=${IMAGE_TAG}
 EOF
 fi
 
-success "Configuration saved to .env"
+# Ensure docker-compose.yml exists in the installation directory
+if [ ! -f docker-compose.yml ]; then
+    cat << EOF > docker-compose.yml
+services:
+  filtr:
+    image: \${FILTR_IMAGE:-${IMAGE_TAG}}
+    container_name: filtr-app
+    restart: unless-stopped
+    ports:
+      - "\${BIND_IP:-0.0.0.0}:\${PORT:-8080}:80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+EOF
+fi
+
+# Ensure manage-ssl.sh exists in installation directory
+cat << 'EOF' > manage-ssl.sh
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+if [ -f "./install.sh" ]; then
+    exec ./install.sh --update-ssl "$@"
+else
+    echo "Error: install.sh not found in ${SCRIPT_DIR}" >&2
+    exit 1
+fi
+EOF
+chmod +x manage-ssl.sh
+
+# Ensure upgrade.sh exists in installation directory
+if [ ! -f upgrade.sh ]; then
+    cat << 'EOF' > upgrade.sh
+#!/usr/bin/env bash
+set -euo pipefail
+APP_NAME="filtr"
+REPO="kisa-ops/filtr"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+
+if docker compose version >/dev/null 2>&1; then
+    COMPOSE_CMD="docker compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_CMD="docker-compose"
+else
+    echo "[-] Error: docker compose not found." >&2
+    exit 1
+fi
+
+[ -f .env ] && { set -a; source .env; set +a; }
+CURRENT_PORT="${PORT:-8080}"
+
+echo "[*] Checking for latest release tag from GitHub..."
+LATEST_TAG=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | head -n1 | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+[ -z "${LATEST_TAG}" ] && LATEST_TAG="latest"
+
+TARGET_IMAGE="ghcr.io/${REPO}:${LATEST_TAG}"
+LOCAL_IMAGE="filtr:${LATEST_TAG}"
+
+echo "[+] Pulling updated image: ${TARGET_IMAGE}..."
+if docker pull "${TARGET_IMAGE}" 2>/dev/null; then
+    docker tag "${TARGET_IMAGE}" "${LOCAL_IMAGE}"
+else
+    PACKAGE_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}/filtr-docker-${LATEST_TAG}.tar.gz"
+    echo "[*] Downloading package archive: ${PACKAGE_URL}"
+    TAR_PATH="/tmp/filtr-docker-${LATEST_TAG}.tar.gz"
+    curl -fSL --progress-bar -o "${TAR_PATH}" "${PACKAGE_URL}"
+    docker load < "${TAR_PATH}"
+    rm -f "${TAR_PATH}"
+fi
+
+sed -i "s|^FILTR_IMAGE=.*|FILTR_IMAGE=${TARGET_IMAGE}|g" .env || true
+echo "[*] Restarting stack in ${SCRIPT_DIR}..."
+${COMPOSE_CMD} up -d --force-recreate
+echo "[+] Upgrade complete!"
+EOF
+    chmod +x upgrade.sh
+fi
 
 # -----------------------------------------------------------------------------
-# 4. SSL Certificate Generation & ssl-info.json
+# 5. SSL Certificate Generation & ssl-info.json
 # -----------------------------------------------------------------------------
 mkdir -p ssl
 
@@ -377,36 +510,21 @@ if [ "${ENABLE_SSL}" = true ]; then
             -subj "/CN=${SSL_DOMAIN}" 2>/dev/null
         chmod 600 ssl/key.pem
         chmod 644 ssl/cert.pem
-        success "Self-signed certificate generated in ./ssl/ (valid for 365 days)."
-    elif [ -n "${SSL_CERT_CONTENT}" ] && [ -n "${SSL_KEY_CONTENT}" ]; then
-        info "Installing custom SSL certificates..."
-        # If CA is provided, combine Server Cert + CA Cert into cert.pem for complete browser chain
-        if [ -n "${SSL_CA_CONTENT}" ]; then
-            echo -e "${SSL_CERT_CONTENT}\n\n${SSL_CA_CONTENT}" > ssl/cert.pem
-            echo "${SSL_CA_CONTENT}" > ssl/ca.pem
-            chmod 644 ssl/ca.pem
-            success "Root/CA certificate attached to certificate chain."
-        else
-            echo "${SSL_CERT_CONTENT}" > ssl/cert.pem
-        fi
-        echo "${SSL_KEY_CONTENT}" > ssl/key.pem
-        chmod 600 ssl/key.pem
-        chmod 644 ssl/cert.pem
-        success "Custom certificate and private key installed into ./ssl/"
+        success "Self-signed certificate generated in ${INSTALL_DIR}/ssl/ (valid for 365 days)."
     elif [ -n "${SSL_CERT_PATH}" ] && [ -n "${SSL_KEY_PATH}" ]; then
-        info "Copying SSL certificates from provided file paths..."
+        info "Installing custom SSL certificates from file paths..."
         if [ -n "${SSL_CA_PATH}" ] && [ -f "${SSL_CA_PATH}" ]; then
             cat "${SSL_CERT_PATH}" "${SSL_CA_PATH}" > ssl/cert.pem
             cp -f "${SSL_CA_PATH}" ssl/ca.pem
             chmod 644 ssl/ca.pem
-            success "Root/CA certificate attached to certificate chain."
+            success "Root/CA certificate appended to certificate chain."
         else
             cp -f "${SSL_CERT_PATH}" ssl/cert.pem
         fi
         cp -f "${SSL_KEY_PATH}" ssl/key.pem
         chmod 600 ssl/key.pem
         chmod 644 ssl/cert.pem
-        success "Certificates copied to ./ssl/"
+        success "Certificates copied to ${INSTALL_DIR}/ssl/"
     fi
 
     # Generate ssl-info.json for Admin Portal diagnostics
@@ -440,7 +558,7 @@ if [ "${ENABLE_SSL}" = true ]; then
 }
 EOF
         chmod 644 ssl/ssl-info.json
-        success "Certificate metadata saved to ./ssl/ssl-info.json"
+        success "Certificate metadata saved to ${INSTALL_DIR}/ssl/ssl-info.json"
     fi
 
     # Generate hardened Nginx configuration
@@ -482,7 +600,6 @@ http {
     tcp_nodelay     on;
     keepalive_timeout  65;
 
-    # Gzip Compression
     gzip on;
     gzip_vary on;
     gzip_proxied any;
@@ -593,7 +710,7 @@ http {
 }
 EOF
 
-    # Create docker-compose.override.yml
+    # Create docker-compose.override.yml in installation directory
     cat << EOF > docker-compose.override.yml
 services:
   filtr:
@@ -624,7 +741,7 @@ if [ "${UPDATE_SSL_ONLY}" = true ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Image Retrieval (GHCR Pull or Release Asset Fallback)
+# 6. Image Retrieval (GHCR Pull or Release Asset Fallback)
 # -----------------------------------------------------------------------------
 info "Checking container image availability..."
 
@@ -661,13 +778,13 @@ if [ "${IMAGE_READY}" = false ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Launch Production Container Stack
+# 7. Launch Production Container Stack
 # -----------------------------------------------------------------------------
-info "Starting ${APP_NAME} production container..."
+info "Starting ${APP_NAME} production container from ${INSTALL_DIR}..."
 
-# Avoid container name collisions with outside containers
+# Clean up any existing container running from /tmp or elsewhere to prevent name collisions
 if docker ps -a --format '{{.Names}}' | grep -Eq "^filtr-app$"; then
-    info "Stopping existing filtr-app container..."
+    info "Stopping previous filtr-app container instance..."
     docker stop filtr-app >/dev/null 2>&1 || true
     docker rm filtr-app >/dev/null 2>&1 || true
 fi
@@ -675,12 +792,11 @@ fi
 ${COMPOSE_CMD} up -d --remove-orphans
 
 # -----------------------------------------------------------------------------
-# 7. Systemd Service Integration (Optional)
+# 8. Systemd Service Integration (Optional)
 # -----------------------------------------------------------------------------
 if [ "${INSTALL_SYSTEMD}" = true ]; then
     info "Configuring systemd service..."
     SERVICE_FILE="/etc/systemd/system/filtr.service"
-    WORKING_DIR="$(pwd)"
     DOCKER_BIN="$(command -v docker)"
 
     SYSTEMD_CONTENT="[Unit]
@@ -691,7 +807,7 @@ Requires=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=${WORKING_DIR}
+WorkingDirectory=${INSTALL_DIR}
 ExecStart=${DOCKER_BIN} compose up -d
 ExecStop=${DOCKER_BIN} compose down
 TimeoutStartSec=0
@@ -715,7 +831,7 @@ WantedBy=multi-user.target
 fi
 
 # -----------------------------------------------------------------------------
-# 8. Firewall Inspection & Advice
+# 9. Firewall Inspection & Advice
 # -----------------------------------------------------------------------------
 if command -v ufw >/dev/null 2>&1 && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
     echo
@@ -725,7 +841,7 @@ if command -v ufw >/dev/null 2>&1 && sudo ufw status 2>/dev/null | grep -q "Stat
 fi
 
 # -----------------------------------------------------------------------------
-# 9. Healthcheck & Success Summary
+# 10. Healthcheck & Success Summary
 # -----------------------------------------------------------------------------
 info "Waiting for service to become healthy..."
 CHECK_PORT="${HTTP_PORT}"
@@ -752,29 +868,29 @@ else
 fi
 echo "=========================================================="
 echo
+echo -e "  ${BOLD}Installation Path:${NC} ${GREEN}${INSTALL_DIR}${NC}"
+echo -e "  ${BOLD}Container Name:${NC}    filtr-app"
+echo
 echo -e "  ${BOLD}Access Endpoints:${NC}"
 if [ "${ENABLE_SSL}" = true ]; then
-    echo -e "  • HTTPS:        ${CYAN}https://${SSL_DOMAIN}:${SSL_PORT}${NC}"
+    echo -e "  • HTTPS:           ${CYAN}https://${SSL_DOMAIN}:${SSL_PORT}${NC}"
     if [ "${SSL_REDIRECT}" = true ]; then
-        echo -e "  • HTTP:         ${GRAY}http://localhost:${HTTP_PORT}${NC} ${YELLOW}(redirects to HTTPS)${NC}"
+        echo -e "  • HTTP:            ${GRAY}http://localhost:${HTTP_PORT}${NC} ${YELLOW}(redirects to HTTPS)${NC}"
     else
-        echo -e "  • HTTP:         ${CYAN}http://localhost:${HTTP_PORT}${NC}"
+        echo -e "  • HTTP:            ${CYAN}http://localhost:${HTTP_PORT}${NC}"
     fi
 else
-    echo -e "  • HTTP:         ${CYAN}http://localhost:${HTTP_PORT}${NC}"
+    echo -e "  • HTTP:            ${CYAN}http://localhost:${HTTP_PORT}${NC}"
 fi
 echo
-echo -e "  ${BOLD}Container:${NC}      filtr-app"
-echo -e "  ${BOLD}Directory:${NC}      $(pwd)"
-echo -e "  ${BOLD}Repository:${NC}     https://github.com/kisa-ops/filtr"
-echo
 echo -e "${BOLD}Operational Commands:${NC}"
-echo "  • View live logs:       ${COMPOSE_CMD} logs -f"
-echo "  • Check container:      ${COMPOSE_CMD} ps"
-echo "  • Update SSL certs:     ./install.sh --update-ssl"
-echo "  • Restart stack:        ${COMPOSE_CMD} restart"
-echo "  • Stop stack:           ${COMPOSE_CMD} down"
-echo "  • Upgrade to latest:    ./upgrade.sh"
-[ "${INSTALL_SYSTEMD}" = true ] && echo "  • Systemd status:       sudo systemctl status filtr"
+echo "  • Change to app dir:   cd ${INSTALL_DIR}"
+echo "  • View live logs:      docker compose logs -f"
+echo "  • Check container:     docker compose ps"
+echo "  • Update SSL certs:    ./manage-ssl.sh"
+echo "  • Restart stack:       docker compose restart"
+echo "  • Stop stack:          docker compose down"
+echo "  • Upgrade to latest:   ./upgrade.sh"
+[ "${INSTALL_SYSTEMD}" = true ] && echo "  • Systemd status:      sudo systemctl status filtr"
 echo "=========================================================="
 echo
