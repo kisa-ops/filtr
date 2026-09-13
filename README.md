@@ -84,7 +84,7 @@ docker run -d \
   --name filtr-app \
   --restart unless-stopped \
   -p 8080:80 \
-  ghcr.io/kisa-ops/filtr:v1.7.0
+  ghcr.io/kisa-ops/filtr:v1.8.0
 ```
 
 ---

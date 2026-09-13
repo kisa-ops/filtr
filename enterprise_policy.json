@@ -1,15 +1,15 @@
 {
   "version": "1.7.0-enterprise",
-  "updatedAt": "2026-09-13T12:05:56.933Z",
+  "updatedAt": "2026-09-13T17:55:23.725Z",
   "organization": "Enterprise Security Operations",
-  "policyChecksum": "sha256-e656285266665bd56d968885714b759672cf373df2af7b50cc7f7ab7f24b2399",
-  "defaultPolicy": "soc2",
+  "policyChecksum": "sha256-6b6b80c8f7240c897507a978d718e8975e6dfd1b8f6de785c28b0486aa3c0dac",
+  "defaultPolicy": "pci",
   "enabledModules": {
     "text": true,
     "logs": true,
-    "excel": true
+    "excel": false
   },
-  "showPolicyInHeader": true,
+  "showPolicyInHeader": false,
   "rules": [
     {
       "id": "aba_routing",
@@ -426,6 +426,16 @@
         "172.20.10.4",
         "10.128.0.5:9092"
       ]
+    },
+    {
+      "id": "dup_rule_1",
+      "name": "Duplicate Rule 1",
+      "pattern": "\\bTESTDUP-[0-9]{5}\\b",
+      "category": "devops",
+      "severity": "high",
+      "replacementTemplate": "[DUP_1]",
+      "isCustom": false,
+      "enabled": true
     },
     {
       "id": "email_address",
@@ -1237,22 +1247,6 @@
         "Account Number: 123456789012",
         "acct #: 9876543210",
         "bank acct: 1029384756"
-      ]
-    },
-    {
-      "id": "fin_us_bank_routing_aba",
-      "name": "US ABA Bank Routing Transit Number",
-      "pattern": "(?:routing(?:\\s*number|\\s*no|\\s*#)?|aba(?:\\s*number|\\s*#)?|rtn)\\s*[:=\\-]?\\s*\\b(0[1-9][0-9]{7}|[123][0-2][0-9]{7})\\b",
-      "category": "financial",
-      "severity": "critical",
-      "replacementTemplate": "[US_ROUTING_{INDEX}]",
-      "isCustom": false,
-      "enabled": true,
-      "description": "Matches 9-digit US American Bankers Association (ABA) routing transit numbers with contextual indicator.",
-      "examples": [
-        "Routing Number: 021000021",
-        "ABA #: 121000358",
-        "Routing: 011000015"
       ]
     },
     {
