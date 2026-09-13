@@ -8,7 +8,7 @@
 set -euo pipefail
 
 APP_NAME="filtr"
-VERSION="v1.6.0"
+VERSION="v1.7.0"
 PACKAGE_URL="https://github.com/kisa-ops/filtr/releases/download/${VERSION}/filtr-docker-${VERSION}.tar.gz"
 IMAGE_TAG="ghcr.io/kisa-ops/filtr:${VERSION}"
 LOCAL_TAG="filtr:${VERSION}"

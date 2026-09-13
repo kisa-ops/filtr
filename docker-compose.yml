@@ -1,10 +1,12 @@
 services:
   filtr:
-    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v1.6.0}
+    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v1.7.0}
     container_name: filtr-app
     restart: unless-stopped
     ports:
       - "${BIND_IP:-0.0.0.0}:${PORT:-8080}:80"
+    volumes:
+      - filtr-data:/data
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -25,3 +27,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+volumes:
+  filtr-data:
+    name: filtr-data

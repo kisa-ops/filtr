@@ -185,7 +185,7 @@ spec:
     spec:
       containers:
       - name: filtr
-        image: ghcr.io/kisa-ops/filtr:v1.6.0
+        image: ghcr.io/kisa-ops/filtr:v1.7.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
