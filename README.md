@@ -84,7 +84,7 @@ docker run -d \
   --name filtr-app \
   --restart unless-stopped \
   -p 8080:80 \
-  ghcr.io/kisa-ops/filtr:v1.3.0
+  ghcr.io/kisa-ops/filtr:v1.6.0
 ```
 
 ---
@@ -109,10 +109,10 @@ The wizard displays your currently running version and the latest available rele
   Repository: https://github.com/kisa-ops/filtr
 ==========================================================
 [INFO] Currently deployed version: v1.0.0
-Latest published release:  v1.3.0
+Latest published release:  v1.4.0
 
 Select an action:
-  1) Upgrade to Latest Release (v1.3.0)
+  1) Upgrade to Latest Release (v1.4.0)
   2) Deploy Specific Version (Targeted Upgrade or Rollback)
   3) View All Published Releases
   4) Cancel
@@ -123,11 +123,11 @@ Select an action:
 To deploy or upgrade to a specific release tag:
 
 ```bash
-# Deploy a specific version (e.g. v1.3.0)
-./upgrade.sh --version v1.3.0
+# Deploy a specific version (e.g. v1.4.0)
+./upgrade.sh --version v1.4.0
 
 # Non-interactive / CI/CD automation
-./upgrade.sh --version v1.3.0 --yes
+./upgrade.sh --version v1.4.0 --yes
 ```
 
 ### 3. Safe Version Rollback
@@ -154,7 +154,7 @@ Output:
 ```text
 TAG            | DATE         | RELEASE TITLE                           
 ----------------------------------------------------------------------
-v1.3.0         | 2026-09-11   | filtr v1.3.0 — Advanced Rule Builder, Ve
+v1.4.0         | 2026-09-11   | filtr v1.4.0 — Advanced Rule Builder, Ve
 v1.2.0         | 2026-09-11   | filtr v1.2.0 — GCC Identity Rules, OCI D
 v1.1.0         | 2026-09-11   | filtr v1.1.0 — SSL/TLS Manager, Root/CA 
 v1.0.0         | 2026-09-09   | filtr v1.0.0 — Enterprise In-Browser Dat
@@ -168,12 +168,12 @@ For secure, disconnected, or air-gapped enterprise environments:
 
 1. Download the pre-built container archive from [Releases](https://github.com/kisa-ops/filtr/releases):
    ```bash
-   wget https://github.com/kisa-ops/filtr/releases/download/v1.3.0/filtr-docker-v1.3.0.tar.gz
+   wget https://github.com/kisa-ops/filtr/releases/download/v1.4.0/filtr-docker-v1.5.0.tar.gz
    ```
-2. Copy `filtr-docker-v1.3.0.tar.gz` and `docker-compose.yml` to your offline host.
+2. Copy `filtr-docker-v1.5.0.tar.gz` and `docker-compose.yml` to your offline host.
 3. Load the container image:
    ```bash
-   docker load < filtr-docker-v1.3.0.tar.gz
+   docker load < filtr-docker-v1.5.0.tar.gz
    ```
 4. Start the stack:
    ```bash
@@ -188,6 +188,7 @@ For secure, disconnected, or air-gapped enterprise environments:
 
 | Version | Release Date | Summary of Changes |
 |---|---|---|
+| **v1.4.0** | 2026-09-12 | **225 Enterprise Detection Rules Default Deployment**: Shipped 5 official enterprise rule JSON packs (Grand Master 225 pack, Core Infrastructure 150 pack, Insurance & Software 45 pack, GCC/Dev 30 pack, Combined 195 pack) integrated directly into default product deployment across Docker, Nginx, installer scripts, and client-side pre-seeded runtime catalog. Added Deployment Rule Packs modal in Admin Portal with 1-click load and direct download. |
 | **v1.3.0** | 2026-09-11 | **Admin Portal Hook Fix**: Resolved Minified React error #310 by ensuring unconditional hook execution. **Visual Guided Rule Builder**: Added regex-free detection rule builder with case/boundary controls. **Non-Destructive Import**: Append-only policy ingestion with automated duplicate detection and tagging. **Maintenance Engine**: Enhanced `upgrade.sh` with `--version`, `--rollback`, `--list`, and interactive TUI. Vault delete removal. |
 | **v1.2.0** | 2026-09-11 | **GCC Identity Detectors**: Added native detection for Qatar ID (QID), UAE Emirates ID, Saudi National ID/Iqama, Kuwait PACI Civil ID, Oman ROP Civil ID, and GCC Passports. **Cloud & Infrastructure**: Oracle Cloud (OCI) token detectors and Apache Tomcat error log patterns. Pre-packaged rule export bundles. |
 | **v1.1.0** | 2026-09-11 | **SSL/TLS & Hardening**: Custom SSL certificate wizard, Root/Intermediate CA chain support, `manage-ssl.sh` utility, standardized `/opt/filtr` isolation path, and Systemd service integration. |
@@ -222,7 +223,7 @@ For secure, disconnected, or air-gapped enterprise environments:
 | **Disk Exhaustion** | Prevent Docker logs from filling host storage. | `docker-compose.yml` includes log rotation (`max-size: 10m`, `max-file: 3`). |
 | **Monitoring** | Automated container healthchecks. | Native `/healthz` endpoint monitored by Docker engine. |
 
-Refer to [`DEPLOYMENT.md`](./DEPLOYMENT.md) for full reverse-proxy templates (Nginx, Traefik, Caddy), Kubernetes manifests, and security hardening guidelines.
+Refer to [`ARCHITECTURE.md`](./ARCHITECTURE.md) for deep-dive system architecture and data persistence specifications, [`DEPLOYMENT.md`](./DEPLOYMENT.md) for reverse-proxy templates (Nginx, Traefik, Caddy), and [`SECURITY_AUDIT.md`](./SECURITY_AUDIT.md) for the SAST/DAST vulnerability review.
 
 ---
 

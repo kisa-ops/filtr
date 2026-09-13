@@ -1,0 +1,722 @@
+[
+  {
+    "id": "ins_policy_number_general",
+    "name": "Insurance Policy Number (Life / Health / Auto / Property)",
+    "category": "financial",
+    "description": "Matches insurance policy identifiers formatted with common prefixes (POL, PA, HL, LIFE, AUTO) or context keywords.",
+    "pattern": "(?:policy(?:\\s*number|\\s*no|\\s*#)?|policy_num)\\s*[:=\\-]?\\s*\\b([A-Z0-9]{2,4}-[0-9]{5,10}|[0-9]{8,12})\\b",
+    "flags": "i",
+    "replacementTemplate": "[INS_POLICY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "Policy Number: POL-98124012",
+      "policy #: PA-1029384",
+      "Policy No: 1234567890"
+    ]
+  },
+  {
+    "id": "ins_claim_number",
+    "name": "Insurance Claim / Loss Tracking Number",
+    "category": "financial",
+    "description": "Matches insurance claim reference numbers assigned to auto, property, casualty, and medical loss filings.",
+    "pattern": "(?:claim(?:\\s*number|\\s*no|\\s*#)?|loss(?:\\s*report)?(?:\\s*number|\\s*#)?)\\s*[:=\\-]?\\s*\\b(CLM-[A-Z0-9]{6,12}|[A-Z]{2,3}-[0-9]{6,10}|[0-9]{9,12})\\b",
+    "flags": "i",
+    "replacementTemplate": "[INS_CLAIM_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "Claim Number: CLM-83920194",
+      "claim #: AUT-1029384",
+      "Claim No: 918273645"
+    ]
+  },
+  {
+    "id": "ins_health_mbi",
+    "name": "US Medicare Beneficiary Identifier (MBI)",
+    "category": "phi",
+    "description": "Matches US CMS Medicare Beneficiary Identifiers (11-character alphanumeric format with letters in positions 2, 5, 8, 9).",
+    "pattern": "\\b[1-9][AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9][- ]?[AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9][- ]?[AC-HJ-NP-RT-Yac-hj-np-rt-y]{2}[0-9]{2}\\b",
+    "replacementTemplate": "[MEDICARE_MBI_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "1EG4-TE5-MK72",
+      "1EG4TE5MK72",
+      "2AC4-RE6-PW19"
+    ]
+  },
+  {
+    "id": "ins_nhs_number",
+    "name": "UK NHS Patient & Health Identifier",
+    "category": "phi",
+    "description": "Matches UK National Health Service 10-digit identifier in 3-3-4 spaced or contiguous format.",
+    "pattern": "\\b[0-9]{3}[ ]?[0-9]{3}[ ]?[0-9]{4}\\b",
+    "replacementTemplate": "[UK_NHS_NUMBER_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "943 476 5919",
+      "9876543210"
+    ]
+  },
+  {
+    "id": "ins_vin_number",
+    "name": "Vehicle Identification Number (VIN) - Auto Insurance",
+    "category": "pii",
+    "description": "Matches 17-character ISO 3779 Vehicle Identification Numbers used in auto insurance policies and accident claims.",
+    "pattern": "\\b[A-HJ-NPR-Z0-9]{17}\\b",
+    "replacementTemplate": "[VEHICLE_VIN_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "1HGCR2F83HA123456",
+      "WAUZZZ4G8EN123456",
+      "1FTFW1ET4EF123456"
+    ]
+  },
+  {
+    "id": "ins_icd10_diagnosis",
+    "name": "ICD-10-CM Medical Diagnosis Code",
+    "category": "phi",
+    "description": "Matches International Classification of Diseases (ICD-10) diagnosis codes used in health and disability claims.",
+    "pattern": "(?:diagnosis|dx|icd[- ]?10(?:\\s*code)?)\\s*[:=\\-]?\\s*\\b([A-TV-Z][0-9][0-9A-Z](?:\\.[0-9A-Z]{1,4})?)\\b",
+    "flags": "i",
+    "replacementTemplate": "[ICD10_DIAGNOSIS_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Diagnosis: E11.9",
+      "ICD-10 Code: I10",
+      "Dx: A00.0",
+      "icd10: Z00.00"
+    ]
+  },
+  {
+    "id": "ins_cpt_procedure",
+    "name": "Current Procedural Terminology (CPT) Healthcare Code",
+    "category": "phi",
+    "description": "Matches 5-digit CPT procedure codes associated with healthcare insurance billings and treatment authorisations.",
+    "pattern": "(?:cpt(?:\\s*code)?|procedure(?:\\s*code)?)\\s*[:=\\-]?\\s*\\b([0-9]{4}[0-9A-Z]|\\b99[2-4][0-9]{2}\\b)\\b",
+    "flags": "i",
+    "replacementTemplate": "[CPT_PROCEDURE_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "CPT Code: 99213",
+      "procedure: 99214",
+      "CPT: 00100"
+    ]
+  },
+  {
+    "id": "ins_rx_ndc_number",
+    "name": "National Drug Code (NDC) - Pharmacy Benefit Claim",
+    "category": "phi",
+    "description": "Matches 10 or 11-digit National Drug Code (NDC) numbers used in prescription drug insurance claims.",
+    "pattern": "(?:ndc(?:\\s*code)?|rx(?:\\s*ndc)?)\\s*[:=\\-]?\\s*\\b([0-9]{4,5}-[0-9]{3,4}-[0-9]{1,2})\\b",
+    "flags": "i",
+    "replacementTemplate": "[NDC_DRUG_CODE_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "NDC: 00002-1433-80",
+      "NDC Code: 50580-449-01",
+      "rx: 00069-3150-83"
+    ]
+  },
+  {
+    "id": "ins_group_policy_number",
+    "name": "Group Benefit Plan Policy / Sponsor ID",
+    "category": "financial",
+    "description": "Matches employer corporate group benefit plan numbers and health insurance sponsor IDs.",
+    "pattern": "(?:group(?:\\s*number|\\s*no|\\s*#)?|plan(?:\\s*number|\\s*#)?)\\s*[:=\\-]?\\s*\\b(GRP-[A-Z0-9]{5,10}|[A-Z]{2,4}[0-9]{5,8})\\b",
+    "flags": "i",
+    "replacementTemplate": "[GROUP_PLAN_ID_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Group Number: GRP-981024",
+      "group #: ACME10293",
+      "Group No: GP987654"
+    ]
+  },
+  {
+    "id": "ins_producer_npn",
+    "name": "Insurance Producer / Agent License (NPN)",
+    "category": "pii",
+    "description": "Matches National Producer Numbers (NPN) identifying insurance agents, brokers, and agency principals.",
+    "pattern": "(?:npn(?:\\s*number|\\s*#)?|producer(?:\\s*id|\\s*number)?|agent(?:\\s*npn|\\s*license))\\s*[:=\\-]?\\s*\\b([0-9]{7,10})\\b",
+    "flags": "i",
+    "replacementTemplate": "[INS_PRODUCER_NPN_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "NPN Number: 17283940",
+      "producer id: 9812736",
+      "Agent License: 1029384756"
+    ]
+  },
+  {
+    "id": "ins_underwriting_score",
+    "name": "Underwriting Risk Class & Mortality Rating",
+    "category": "financial",
+    "description": "Matches confidential underwriting classifications, risk scores, and mortality adjustment factors.",
+    "pattern": "(?:underwriting\\s*class|risk\\s*score|mortality\\s*rating)\\s*[:=\\-]?\\s*(?:Class\\s+[A-Z0-9]+|Preferred\\s+Plus|Standard\\s+Smoker|Substandard\\s+Table\\s+[A-Z0-9]+|\\b[0-9]{2,3}(?:\\.[0-9]+)?%?\\b)",
+    "flags": "i",
+    "replacementTemplate": "[UNDERWRITING_RISK_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Underwriting Class: Preferred Plus",
+      "risk score: 785",
+      "mortality rating = Substandard Table B"
+    ]
+  },
+  {
+    "id": "ins_telematics_obd_id",
+    "name": "Vehicle Telematics & OBD-II Tracker Device ID",
+    "category": "pii",
+    "description": "Matches connected vehicle OBD-II dongle IDs and telematics serial numbers in usage-based auto insurance.",
+    "pattern": "(?:obd(?:-ii)?\\s*id|telematics(?:\\s*imei|\\s*device|\\s*id)?)\\s*[:=\\-]?\\s*[\\\"']?([A-Z0-9]{12,18})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[TELEMATICS_DEVICE_ID_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "OBD-II ID: 864920039182736",
+      "telematics imei: 359182049182736",
+      "telematics device = 'DEV981240192834'"
+    ]
+  },
+  {
+    "id": "ins_sepa_mandate_umr",
+    "name": "Insurance Premium Direct Debit Mandate (UMR)",
+    "category": "financial",
+    "description": "Matches Unique Mandate Reference (UMR) for SEPA automatic premium collection debit orders.",
+    "pattern": "(?:mandate\\s*ref(?:erence)?|umr\\s*number)\\s*[:=\\-]?\\s*[\\\"']?([A-Za-z0-9\\-\\/]{10,35})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[SEPA_MANDATE_UMR_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "Mandate Reference: POL-SEPA-2026-98124",
+      "UMR Number: INS/MANDATE/88991122"
+    ]
+  },
+  {
+    "id": "ins_beneficiary_ssn_split",
+    "name": "Life Insurance Beneficiary Allocation Details",
+    "category": "pii",
+    "description": "Matches designated life insurance beneficiary names associated with allocation percentages.",
+    "pattern": "(?:primary|contingent)?\\s*beneficiary\\s*[:=\\-]\\s*([A-Za-z\\s.]+)\\s*[,;]?\\s*(?:share|percent|allocation|%)\\s*[:=\\-]?\\s*([0-9]{1,3}%?)",
+    "flags": "i",
+    "replacementTemplate": "beneficiary: [BENEFICIARY_NAME_{INDEX}], allocation: [ALLOCATION_PCT_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "Primary Beneficiary: Jane Doe, Share: 50%",
+      "beneficiary = Robert Smith; percent: 100%",
+      "Contingent Beneficiary: Michael Brown, allocation: 25%"
+    ]
+  },
+  {
+    "id": "ins_loss_adjuster_payout",
+    "name": "Claim Settlement Reserve & Payout Amount",
+    "category": "financial",
+    "description": "Matches confidential claim reserve limits, approved settlement figures, and loss adjuster valuations.",
+    "pattern": "(?:settlement\\s*amount|claim\\s*reserve|approved\\s*payout|loss\\s*estimate)\\s*[:=\\-]?\\s*([$€£AEDSAR\\s]*[0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]{2})?)",
+    "flags": "i",
+    "replacementTemplate": "settlement: [CLAIM_PAYOUT_AMOUNT_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Settlement Amount: $145,000.00",
+      "claim reserve = €35,000.00",
+      "Approved Payout: SAR 95,000.00"
+    ]
+  },
+  {
+    "id": "ins_fraud_siu_flag",
+    "name": "Special Investigation Unit (SIU) Fraud Case ID",
+    "category": "financial",
+    "description": "Matches insurance fraud investigation case identifiers and SIU tracking numbers.",
+    "pattern": "(?:siu[- ]?case(?:\\s*id|\\s*number|\\s*#)?|fraud[- ]?investigation)\\s*[:=\\-]?\\s*\\b(SIU-[0-9]{4}-[0-9]{4,8}|FRD-[0-9]{6,10})\\b",
+    "flags": "i",
+    "replacementTemplate": "[SIU_FRAUD_CASE_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "SIU-CASE ID: SIU-2026-981245",
+      "siu case #: SIU-2025-00129",
+      "fraud investigation: FRD-981024"
+    ]
+  },
+  {
+    "id": "ins_disability_rating",
+    "name": "Disability Percentage & Impairment Rating",
+    "category": "phi",
+    "description": "Matches permanent disability rating percentages and whole person impairment assessments.",
+    "pattern": "(?:disability\\s*rating|impairment\\s*rating|wpi\\s*rating)\\s*[:=\\-]?\\s*([0-9]{1,3}\\s*%(?:\\s*(?:whole\\s*person|disability))?)",
+    "flags": "i",
+    "replacementTemplate": "[DISABILITY_RATING_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Disability Rating: 45%",
+      "impairment rating: 30% whole person",
+      "wpi rating = 60%"
+    ]
+  },
+  {
+    "id": "ins_prior_authorization",
+    "name": "Healthcare Insurance Prior Authorization Number",
+    "category": "phi",
+    "description": "Matches medical prior authorization, pre-certification, and referral approval reference numbers.",
+    "pattern": "(?:prior\\s*auth(?:orization)?|pre-?cert(?:ification)?)\\s*(?:number|no|#)?\\s*[:=\\-]?\\s*\\b(AUTH-[0-9A-Z]{6,12}|PA-[0-9]{7,10}|[0-9]{9,12})\\b",
+    "flags": "i",
+    "replacementTemplate": "[PRIOR_AUTH_NUMBER_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "Prior Authorization Number: AUTH-98124AC",
+      "pre-cert #: PA-10293847",
+      "Prior Auth: 918273645"
+    ]
+  },
+  {
+    "id": "soft_stripe_webhook_secret",
+    "name": "Stripe Webhook Signing Secret",
+    "category": "credentials",
+    "description": "Matches Stripe webhook endpoint signature verification secrets starting with whsec_.",
+    "pattern": "\\bwhsec_[a-zA-Z0-9]{32,64}\\b",
+    "replacementTemplate": "[STRIPE_WEBHOOK_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "whsec_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      "whsec_0123456789abcdefghijklmnopqrstuv"
+    ]
+  },
+  {
+    "id": "soft_stripe_customer_id",
+    "name": "Stripe Customer Identifier (cus_)",
+    "category": "financial",
+    "description": "Matches Stripe customer object identifiers associated with corporate billing accounts.",
+    "pattern": "\\bcus_[a-zA-Z0-9]{14,24}\\b",
+    "replacementTemplate": "[STRIPE_CUSTOMER_ID_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "cus_N638dkLmP0192A",
+      "cus_9812401928340192"
+    ]
+  },
+  {
+    "id": "soft_stripe_subscription_id",
+    "name": "Stripe Subscription Identifier (sub_)",
+    "category": "financial",
+    "description": "Matches Stripe recurring SaaS subscription identifiers in API payloads and database records.",
+    "pattern": "\\bsub_[a-zA-Z0-9]{14,24}\\b",
+    "replacementTemplate": "[STRIPE_SUBSCRIPTION_ID_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "sub_1M4N2b2eZvKYlo2C9812",
+      "sub_1029384756102938"
+    ]
+  },
+  {
+    "id": "soft_stripe_payment_intent",
+    "name": "Stripe Payment Intent Client Secret",
+    "category": "credentials",
+    "description": "Matches Stripe client secret keys used to confirm client-side payments.",
+    "pattern": "\\bpi_[a-zA-Z0-9]{24}_secret_[a-zA-Z0-9]{24,32}\\b",
+    "replacementTemplate": "[STRIPE_PAYMENT_INTENT_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "pi_3M4N2b2eZvKYlo2C01234567_secret_abcdefghijklmnopqrstuvwx"
+    ]
+  },
+  {
+    "id": "soft_launchdarkly_sdk_key",
+    "name": "LaunchDarkly Feature Flag SDK Key",
+    "category": "credentials",
+    "description": "Matches LaunchDarkly server-side and client-side feature management SDK keys.",
+    "pattern": "\\bsdk-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+    "replacementTemplate": "[LAUNCHDARKLY_SDK_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "sdk-a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+    ]
+  },
+  {
+    "id": "soft_salesforce_client_secret",
+    "name": "Salesforce Connected App Client Secret",
+    "category": "credentials",
+    "description": "Matches Salesforce CRM Connected App OAuth consumer secrets in configuration settings.",
+    "pattern": "(?:salesforce[_-]?secret|sf[_-]?client[_-]?secret)\\s*[:=]\\s*[\\\"']?([0-9A-Za-z]{32,64})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[SALESFORCE_CLIENT_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "salesforce_secret = \"1234567890abcdef1234567890abcdef1234567890abcdef\"",
+      "sf_client_secret: 'A1B2C3D4E5F60718293A4B5C6D7E8F90'"
+    ]
+  },
+  {
+    "id": "soft_hubspot_api_key",
+    "name": "HubSpot Private App Access Token",
+    "category": "credentials",
+    "description": "Matches HubSpot CRM Private App API tokens starting with pat-na1- or pat-eu1-.",
+    "pattern": "\\bpat-(?:na1|eu1)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+    "replacementTemplate": "[HUBSPOT_APP_TOKEN_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical"
+  },
+  {
+    "id": "soft_zendesk_api_token",
+    "name": "Zendesk Support API Token",
+    "category": "credentials",
+    "description": "Matches Zendesk customer support REST API tokens configured in backend services.",
+    "pattern": "(?:zendesk[_-]?token|zd[_-]?api[_-]?key)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9]{40})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[ZENDESK_API_TOKEN_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "zendesk_token = \"abcdefghijklmnopqrstuvwxyz0123456789ABCD\"",
+      "zd_api_key: '0123456789abcdef0123456789abcdef01234567'"
+    ]
+  },
+  {
+    "id": "soft_segment_write_key",
+    "name": "Segment.io Analytics Write Key",
+    "category": "credentials",
+    "description": "Matches Twilio Segment customer data platform source write keys.",
+    "pattern": "(?:segment[_-]?write[_-]?key|analytics[_-]?write[_-]?key)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9]{32})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[SEGMENT_WRITE_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "segment_write_key = \"a1b2c3d4e5f60718293a4b5c6d7e8f90\"",
+      "analytics_write_key: '1234567890abcdef1234567890abcdef'"
+    ]
+  },
+  {
+    "id": "soft_mixpanel_token",
+    "name": "Mixpanel Analytics Project Token",
+    "category": "credentials",
+    "description": "Matches Mixpanel customer behavior tracking project tokens.",
+    "pattern": "(?:mixpanel[_-]?token|mp[_-]?project[_-]?token)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[MIXPANEL_TOKEN_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "mixpanel_token = \"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6\"",
+      "mp_project_token: '0123456789abcdef0123456789abcdef'"
+    ]
+  },
+  {
+    "id": "soft_amplitude_api_key",
+    "name": "Amplitude Analytics API Key & Secret",
+    "category": "credentials",
+    "description": "Matches Amplitude product intelligence API keys and project secrets.",
+    "pattern": "(?:amplitude[_-]?api[_-]?key|amplitude[_-]?secret)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[AMPLITUDE_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "amplitude_api_key = \"1234567890abcdef1234567890abcdef\"",
+      "amplitude_secret: 'a1b2c3d4e5f60718293a4b5c6d7e8f90'"
+    ]
+  },
+  {
+    "id": "soft_terraform_state_secret",
+    "name": "Terraform State (tfstate) Plaintext Database Secret",
+    "category": "cloud",
+    "description": "Matches sensitive credential values stored in plaintext within terraform.tfstate JSON files.",
+    "pattern": "\\\"(?:master_password|admin_password|db_password|private_key_pem)\\\"\\s*:\\s*\\\"([^\\\"]{8,})\\\"",
+    "flags": "i",
+    "replacementTemplate": "\"db_password\": \"[TERRAFORM_STATE_PASSWORD_{INDEX}]\"",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "\"master_password\": \"SuperSecretRdsPass2026!\"",
+      "\"db_password\": \"MyPostgresSecretPassword123\""
+    ]
+  },
+  {
+    "id": "soft_vault_secret_path",
+    "name": "HashiCorp Vault Secret KV Path",
+    "category": "credentials",
+    "description": "Matches internal Vault secret paths and mount locations in application configs and CI scripts.",
+    "pattern": "(?:vault\\s*read|vault\\s*kv\\s*get)\\s+([a-zA-Z0-9_\\-\\/]+(?:\\/production|\\/prod|\\/secrets|\\/db|\\/credentials)[a-zA-Z0-9_\\-\\/]*)",
+    "flags": "i",
+    "replacementTemplate": "vault kv get [VAULT_INTERNAL_PATH_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "vault kv get secret/data/prod/db",
+      "vault read secret/production/credentials/api_keys"
+    ]
+  },
+  {
+    "id": "soft_internal_staging_url",
+    "name": "Internal Staging & Development Microservice FQDN",
+    "category": "network",
+    "description": "Matches non-public staging, preprod, and internal cluster service endpoints.",
+    "pattern": "https?:\\/\\/[a-zA-Z0-9_\\-.]+\\.(?:staging\\.internal|preprod\\.corp|dev\\.local|internal\\.net)\\b(?::[0-9]+)?",
+    "flags": "i",
+    "replacementTemplate": "[INTERNAL_STAGING_ENDPOINT_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "high",
+    "examples": [
+      "https://billing-service.staging.internal:8080",
+      "http://auth-api.preprod.corp",
+      "https://internal-db.dev.local:5432"
+    ]
+  },
+  {
+    "id": "soft_customer_tenant_uuid",
+    "name": "Multi-Tenant Customer Organization / Tenant UUID",
+    "category": "pii",
+    "description": "Matches enterprise multi-tenant tenant_id and org_id UUIDs in API logs and telemetry.",
+    "pattern": "(?:tenant[_-]?id|org[_-]?id|organization[_-]?id|workspace[_-]?id)\\s*[:=]\\s*[\\\"']?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[TENANT_UUID_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "tenant_id = \"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d\"",
+      "org_id: '12345678-abcd-ef01-2345-6789abcdef01'",
+      "workspace_id = \"99887766-5544-3322-1100-aabbccddeeff\""
+    ]
+  },
+  {
+    "id": "soft_database_connection_uri_extended",
+    "name": "Cloud Database URI with Embedded Auth (Snowflake / Cockroach / Redis)",
+    "category": "credentials",
+    "description": "Matches database connection URIs for Snowflake, CockroachDB, Redshift, and Redis with embedded auth credentials.",
+    "pattern": "(?:snowflake|cockroachdb|redshift|redis):\\/\\/[a-zA-Z0-9_\\-\\.%]+:([^@\\s]+)@[a-zA-Z0-9_\\-\\.]+",
+    "flags": "i",
+    "replacementTemplate": "[DATABASE_AUTH_URI_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "snowflake://db_user:SecretSnowflakePass123@xyz123.snowflakecomputing.com",
+      "cockroachdb://app:CockroachSecretPass99@db.internal:26257",
+      "redis://admin:SecretRedisAuthToken123@redis-cluster.internal:6379"
+    ]
+  },
+  {
+    "id": "soft_s3_bucket_internal",
+    "name": "Internal Cloud Storage Bucket Name (AWS S3 / GCS)",
+    "category": "cloud",
+    "description": "Matches proprietary internal S3 or Google Cloud storage bucket URLs leaking organizational naming conventions.",
+    "pattern": "(?:s3:\\/\\/|gs:\\/\\/)[a-zA-Z0-9_\\-.]*(?:prod|internal|private|backup|secrets)[a-zA-Z0-9_\\-.]*",
+    "flags": "i",
+    "replacementTemplate": "[INTERNAL_STORAGE_BUCKET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "s3://corp-prod-customer-backups-2026",
+      "gs://enterprise-private-ml-models",
+      "s3://internal-secrets-vault-data"
+    ]
+  },
+  {
+    "id": "soft_github_webhook_secret",
+    "name": "GitHub Organization Webhook Secret",
+    "category": "credentials",
+    "description": "Matches GitHub webhook HMAC verification secret tokens configured in continuous deployment listeners.",
+    "pattern": "(?:github[_-]?webhook[_-]?secret|gh[_-]?secret)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-]{20,50})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[GITHUB_WEBHOOK_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "github_webhook_secret = \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6\"",
+      "gh_secret: 'SuperSecretGitHubWebhookToken123'"
+    ]
+  },
+  {
+    "id": "soft_slack_webhook_incoming",
+    "name": "Slack Incoming Webhook URL",
+    "category": "credentials",
+    "description": "Matches Slack Incoming Webhook URLs leaking team and channel notification integrations.",
+    "pattern": "https:\\/\\/hooks\\.slack\\.com\\/services\\/T[A-Z0-9]{8,11}\\/B[A-Z0-9]{8,11}\\/[a-zA-Z0-9]{24}",
+    "replacementTemplate": "[SLACK_INCOMING_WEBHOOK_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical"
+  },
+  {
+    "id": "soft_datadog_app_key_extended",
+    "name": "Datadog Application Key (Extended)",
+    "category": "credentials",
+    "description": "Matches Datadog 40-character Application Keys in monitoring configurations.",
+    "pattern": "(?:DD_APP_KEY|DATADOG_APP_KEY)\\s*[:=]\\s*[\\\"']?([a-f0-9]{40})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[DATADOG_APP_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "DD_APP_KEY = \"0123456789abcdef0123456789abcdef01234567\"",
+      "DATADOG_APP_KEY: 'abcdef0123456789abcdef0123456789abcdef01'"
+    ]
+  },
+  {
+    "id": "soft_istio_mtls_cert",
+    "name": "Istio / Envoy Service Mesh TLS Private Key",
+    "category": "credentials",
+    "description": "Matches internal mTLS certificates and keys generated by Istio Citadel / Envoy proxy.",
+    "pattern": "(?:/etc/certs/key\\.pem|/etc/istio/proxy/cert\\.pem|tls\\.key:\\s*\\\"[A-Za-z0-9+/=]{30,}\\\")",
+    "flags": "i",
+    "replacementTemplate": "[SERVICE_MESH_TLS_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "/etc/certs/key.pem",
+      "tls.key: \"LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBMTIzNDU2\""
+    ]
+  },
+  {
+    "id": "soft_grafana_admin_password",
+    "name": "Grafana Admin Server Credentials",
+    "category": "credentials",
+    "description": "Matches GF_SECURITY_ADMIN_PASSWORD in deployment Helm charts and docker-compose files.",
+    "pattern": "(?:GF_SECURITY_ADMIN_PASSWORD|grafana_admin_pass)\\s*[:=]\\s*[\\\"']?([^\\s\\\"']+)[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[GRAFANA_ADMIN_PASSWORD_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "GF_SECURITY_ADMIN_PASSWORD = \"AdminSecretPassword123!\"",
+      "grafana_admin_pass: 'MyGrafanaStrongPass'"
+    ]
+  },
+  {
+    "id": "soft_prometheus_basic_auth",
+    "name": "Prometheus Scrape Basic Authentication Password",
+    "category": "credentials",
+    "description": "Matches basic_auth passwords in Prometheus prometheus.yml scrape configurations.",
+    "pattern": "basic_auth:\\s*\\n\\s*username:\\s*['\\\"][^'\\\"]+['\\\"]\\s*\\n\\s*password:\\s*['\\\"]([^'\\\"]+)['\\\"]",
+    "flags": "m",
+    "replacementTemplate": "[PROMETHEUS_AUTH_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "basic_auth:\n  username: 'metrics'\n  password: 'PrometheusMetricsPassword99!'"
+    ]
+  },
+  {
+    "id": "soft_apple_p8_private_key",
+    "name": "Apple APNs / App Store Connect Auth Key (.p8)",
+    "category": "credentials",
+    "description": "Matches Apple Developer Push Notification Auth Key ID and private key block.",
+    "pattern": "(?:AuthKey_[A-Z0-9]{10}\\.p8|key_id\\s*=\\s*['\\\"][A-Z0-9]{10}['\\\"])",
+    "flags": "i",
+    "replacementTemplate": "[APPLE_APNS_AUTH_KEY_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "AuthKey_2X9949ABCD.p8",
+      "key_id = '9A8B7C6D5E'"
+    ]
+  },
+  {
+    "id": "soft_android_keystore_pass",
+    "name": "Android Application Keystore Signing Password",
+    "category": "credentials",
+    "description": "Matches storePassword and keyPassword credentials inside build.gradle and key.properties.",
+    "pattern": "(?:storePassword|keyPassword)\\s*[:=]\\s*[\\\"']?([^\\s\\\"'\\r\\n]+)[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[ANDROID_KEYSTORE_PASSWORD_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "storePassword = \"MyAndroidReleasePassword123!\"",
+      "keyPassword: 'ReleaseKeyPassword99'"
+    ]
+  },
+  {
+    "id": "soft_jwt_hs256_secret",
+    "name": "JWT HMAC Secret Key Assignment",
+    "category": "credentials",
+    "description": "Matches symmetric HMAC secret keys used to sign and verify JSON Web Tokens.",
+    "pattern": "(?:JWT_SECRET|JWT_KEY|TOKEN_SECRET)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-!@#$%^&*()+=]{16,64})[\\\"']?",
+    "flags": "i",
+    "replacementTemplate": "[JWT_HMAC_SECRET_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "critical",
+    "examples": [
+      "JWT_SECRET = \"super_secret_jwt_signing_key_2026!\"",
+      "TOKEN_SECRET: 'my_very_secure_token_secret_123456'"
+    ]
+  },
+  {
+    "id": "soft_snowflake_account_uri",
+    "name": "Snowflake Account & Warehouse Locator URI",
+    "category": "cloud",
+    "description": "Matches Snowflake locator URLs with enterprise account name and region identifiers.",
+    "pattern": "https:\\/\\/[a-z0-9_\\-]+\\.(?:us-east-1|eu-west-1|ap-southeast-1)\\.snowflakecomputing\\.com",
+    "flags": "i",
+    "replacementTemplate": "[SNOWFLAKE_ACCOUNT_ENDPOINT_{INDEX}]",
+    "enabled": true,
+    "isCustom": false,
+    "severity": "medium",
+    "examples": [
+      "https://acme_corp.us-east-1.snowflakecomputing.com",
+      "https://data_platform.eu-west-1.snowflakecomputing.com"
+    ]
+  }
+]

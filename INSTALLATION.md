@@ -2,7 +2,7 @@
 
 > **filtr** — Enterprise High-Performance Sensitive Data Redaction Platform  
 > Distribution Repository: [`https://github.com/kisa-ops/filtr`](https://github.com/kisa-ops/filtr)  
-> Container Registry: [`ghcr.io/kisa-ops/filtr:v1.3.0`](https://github.com/kisa-ops/filtr/pkgs/container/filtr)
+> Container Registry: [`ghcr.io/kisa-ops/filtr:v1.5.0`](https://github.com/kisa-ops/filtr/pkgs/container/filtr)
 
 This comprehensive guide details the complete workflow for deploying **filtr** in a production environment using the interactive installer (`install.sh`), configuring custom SSL/TLS certificates (including enterprise Root/CA chains), integrating host auto-restart (Systemd), and managing maintenance with `upgrade.sh`.
 
@@ -59,7 +59,7 @@ The installer presents an interactive 4-stage configuration wizard:
   ██║     ██║███████╗██║   ██║  ██║
   ╚═╝     ╚═╝╚══════╝╚═╝   ╚═╝  ╚═╝
 
-Enterprise Sensitive Data Redaction Platform — v1.3.0
+Enterprise Sensitive Data Redaction Platform — v1.5.0
 Distribution: https://github.com/kisa-ops/filtr
 ==========================================================
 
@@ -140,7 +140,7 @@ The installer executes non-destructively, copies files, configures permissions, 
 [INFO] Generating hardened Nginx SSL configuration...
 [+] Nginx SSL and docker-compose.override.yml configured.
 [INFO] Checking container image availability...
-[INFO] Attempting to pull ghcr.io/kisa-ops/filtr:v1.3.0 from GitHub Container Registry...
+[INFO] Attempting to pull ghcr.io/kisa-ops/filtr:v1.5.0 from GitHub Container Registry...
 [+] Image pulled from GHCR.
 [INFO] Starting filtr production container from /opt/filtr...
 [INFO] Stopping previous filtr-app container instance...
@@ -212,7 +212,7 @@ The upgraded `upgrade.sh` utility is installed directly in `/opt/filtr`:
 * **Targeted Version Deployment**:
   ```bash
   # Upgrade or deploy specific version:
-  ./upgrade.sh --version v1.3.0
+  ./upgrade.sh --version v1.5.0
   ```
 * **Rollback Stack to Previous Release**:
   ```bash
@@ -267,7 +267,27 @@ For secure air-gapped data centers without external internet access:
 
 1. Download the pre-packaged offline release archive on an internet-connected host:
    ```bash
-   wget https://github.com/kisa-ops/filtr/releases/download/v1.3.0/filtr-docker-v1.3.0.tar.gz
+   wget https://github.com/kisa-ops/filtr/releases/download/v1.5.0/filtr-docker-v1.5.0.tar.gz
    ```
-2. Copy `filtr-docker-v1.3.0.tar.gz` and the repository contents to `/tmp/filtr/` on the air-gapped server.
-3. Run `sudo ./install.sh`. The installer automatically detects `/tmp/filtr-docker-v1.3.0.tar.gz` or `./filtr-docker-v1.3.0.tar.gz` and loads the container image directly without making external network calls.
+2. Copy `filtr-docker-v1.5.0.tar.gz` and the repository contents to `/tmp/filtr/` on the air-gapped server.
+3. Run `sudo ./install.sh`. The installer automatically detects `/tmp/filtr-docker-v1.5.0.tar.gz` or `./filtr-docker-v1.5.0.tar.gz` and loads the container image directly without making external network calls.
+
+---
+
+## Default Enterprise Detection Rule Packs Deployment
+
+Every official **filtr** production deployment includes 5 pre-packaged, validated enterprise detection rule packs totaling **225+ specialized rules** shipped directly as standard static assets inside `/usr/share/nginx/html/` and served with UTF-8 JSON headers:
+
+| Rule Pack File | Rules | Coverage Scope |
+| :--- | :--- | :--- |
+| `filtr_export_all_enterprise_rules_225_pack.json` | **225** | **Grand Master Pack**: All 225 rules (PII, Financial, Cloud, Insurance, Software, Telecom, DevOps) |
+| `filtr_export_extended_sensitive_data_rules.json` | **150** | **Core Infrastructure**: 20+ National Phones, 15 IBANs, 15 Passports, AWS/GCP/Azure/Vault, Nginx/Docker/Jenkins |
+| `filtr_export_insurance_and_software_company_rules.json` | **45** | **Industry Specialized**: Insurance Policies, Claims, Medicare MBI, NHS, VIN, ICD-10, CPT, Stripe, SaaS API Keys |
+| `filtr_export_gcc_java_angular_dev_rules.json` | **30** | **Regional & Stack**: GCC Telecoms (KSA/UAE/QAT/KWT/OMN/BHR), JVM Stack Traces & Thread Dumps, Angular Errors |
+| `filtr_export_master_enterprise_pack_195_rules.json` | **195** | **Combined Enterprise**: Core 150 Infrastructure + 45 Insurance & Software Company detectors |
+
+### Deployment & Serving Configuration
+- **Nginx Route**: Dedicated location block `location ~* ^/filtr_export_.*\.json$` with `Content-Type: application/json; charset=utf-8` and browser caching headers.
+- **Direct HTTP Access**: Available via `GET /<pack_filename>` (e.g. `curl -s http://localhost:8080/filtr_export_all_enterprise_rules_225_pack.json`).
+- **One-Click Administration**: Admin Portal includes the **"Deployment Rule Packs (225)"** manager to quick-load or download any rule pack with automated duplicate detection.
+- **Zero Configuration**: Rules are pre-integrated into the application runtime catalog out-of-the-box upon deployment.

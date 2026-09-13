@@ -1,0 +1,4281 @@
+{
+  "version": "1.6.0-enterprise",
+  "updatedAt": "2026-09-13T10:17:53.708Z",
+  "organization": "Enterprise Security Operations",
+  "policyChecksum": "sha256-874f8197864456b04248b6c21cacdec3611068dcd1a417f5b6d62ca6bde482f6",
+  "defaultPolicy": "soc2",
+  "enabledModules": {
+    "text": true,
+    "logs": true,
+    "excel": true
+  },
+  "showPolicyInHeader": true,
+  "rules": [
+    {
+      "id": "aws_access_key",
+      "name": "AWS Access Key ID",
+      "category": "cloud",
+      "description": "Matches standard 20-character AWS Access Key IDs starting with AKIA or ASIA",
+      "pattern": "\\b(A[SK]IA[0-9A-Z]{16})\\b",
+      "replacementTemplate": "[AWS_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "aws_secret_key",
+      "name": "AWS Secret Access Key",
+      "category": "cloud",
+      "description": "Detects 40-character AWS Secret Keys in key-value pairs",
+      "pattern": "(?:aws_secret_access_key|aws_secret|secret_key)[\\s]*[=:][\\s]*[\"']?([a-zA-Z0-9/+=]{40})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AWS_SECRET_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "google_api_key",
+      "name": "Google Cloud / Maps API Key",
+      "category": "cloud",
+      "description": "Matches standard 39-character Google Cloud and Firebase API Keys starting with AIza",
+      "pattern": "\\b(AIza[0-9A-Za-z\\-_]{35})\\b",
+      "replacementTemplate": "[GOOGLE_API_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "github_token",
+      "name": "GitHub Token (PAT / OAuth / App)",
+      "category": "cloud",
+      "description": "Matches standard GitHub PATs and app tokens (ghp_, gho_, ghu_, ghs_, ghr_)",
+      "pattern": "\\b(gh[pousr]_[A-Za-z0-9_]{30,255}|github_pat_[A-Za-z0-9_]{50,255})\\b",
+      "replacementTemplate": "[GITHUB_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "gitlab_token",
+      "name": "GitLab Personal Access Token",
+      "category": "cloud",
+      "description": "Detects GitLab PATs starting with glpat-",
+      "pattern": "\\b(glpat-[0-9a-zA-Z\\-_]{20,})\\b",
+      "replacementTemplate": "[GITLAB_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "slack_token",
+      "name": "Slack Bot & User Token",
+      "category": "cloud",
+      "description": "Detects Slack Bot, User, or Workspace authorization tokens",
+      "pattern": "\\b(xox[baprs]-[0-9]{10,13}-[0-9]{10,13}[a-zA-Z0-9-]*)\\b",
+      "replacementTemplate": "[SLACK_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "slack_webhook",
+      "name": "Slack Incoming Webhook URL",
+      "category": "cloud",
+      "description": "Matches full Slack incoming webhook integration URLs",
+      "pattern": "https:\\/\\/hooks\\.slack\\.com\\/services\\/T[0-9A-Z]{8,12}\\/B[0-9A-Z]{8,12}\\/[0-9a-zA-Z]{24}",
+      "replacementTemplate": "[SLACK_WEBHOOK_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "stripe_api_key",
+      "name": "Stripe Secret & Restricted Key",
+      "category": "cloud",
+      "description": "Detects Stripe API keys starting with sk_live_ or rk_live_",
+      "pattern": "\\b(?:sk|rk)_(?:live|test)_[0-9a-zA-Z]{24,99}\\b",
+      "replacementTemplate": "[STRIPE_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "openai_api_key",
+      "name": "OpenAI / LLM API Key",
+      "category": "cloud",
+      "description": "Matches OpenAI legacy and project API keys (sk-... and sk-proj-...)",
+      "pattern": "\\bsk-(?:proj-)?[a-zA-Z0-9-_]{32,128}\\b",
+      "replacementTemplate": "[OPENAI_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "anthropic_api_key",
+      "name": "Anthropic Claude API Key",
+      "category": "cloud",
+      "description": "Detects Anthropic API tokens starting with sk-ant-",
+      "pattern": "\\bsk-ant-[a-zA-Z0-9-_]{32,100}\\b",
+      "replacementTemplate": "[ANTHROPIC_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "twilio_credentials",
+      "name": "Twilio Account SID",
+      "category": "cloud",
+      "description": "Matches 34-character Twilio Account SIDs starting with AC",
+      "pattern": "\\bAC[0-9a-fA-F]{32}\\b",
+      "replacementTemplate": "[TWILIO_SID_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "sendgrid_api_key",
+      "name": "SendGrid API Key",
+      "category": "cloud",
+      "description": "Matches standard 69-character SendGrid API keys starting with SG.",
+      "pattern": "\\bSG\\.[a-zA-Z0-9_\\-]{20,26}\\.[a-zA-Z0-9_\\-]{40,50}\\b",
+      "replacementTemplate": "[SENDGRID_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "jwt_token",
+      "name": "JSON Web Token (JWT)",
+      "category": "cloud",
+      "description": "Matches standard three-segment base64 encoded JWTs",
+      "pattern": "\\b(eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,})\\b",
+      "replacementTemplate": "[JWT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "bearer_token",
+      "name": "Generic Bearer Token",
+      "category": "cloud",
+      "description": "Detects authorization Bearer headers and authentication tokens",
+      "pattern": "(?:bearer\\s+)([a-zA-Z0-9_\\-\\.\\=:_\\+\\/]{24,})",
+      "flags": "i",
+      "replacementTemplate": "[BEARER_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "private_key",
+      "name": "Private Encryption Key Block",
+      "category": "cloud",
+      "description": "Detects RSA, DSA, EC, or OpenSSH PEM private keys",
+      "pattern": "-----BEGIN (?:RSA|DSA|EC|OPENSSH|PGP)?\\s?PRIVATE KEY-----[\\s\\S]*?-----END (?:RSA|DSA|EC|OPENSSH|PGP)?\\s?PRIVATE KEY-----",
+      "replacementTemplate": "[REDACTED_PRIVATE_KEY]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "db_connection_url",
+      "name": "Database Connection String",
+      "category": "cloud",
+      "description": "Matches database URIs with credentials (postgres, mysql, mongodb, redis)",
+      "pattern": "\\b(?:mongodb(?:\\+srv)?|postgres(?:ql)?|mysql|redis):\\/\\/[^\\s\"'<>]+",
+      "replacementTemplate": "[DB_CONNECTION_STRING]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "oci_ocid",
+      "name": "Oracle Cloud OCID (User, Tenancy, Instance, Key)",
+      "category": "cloud",
+      "description": "Matches Oracle Cloud Infrastructure resource identifiers (OCIDs) for Users, Tenancies, Compartments, and Instances",
+      "pattern": "\\bocid1\\.[a-z0-9-]+\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.[a-z0-9]{20,}\\b",
+      "replacementTemplate": "[OCI_OCID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "ocid1.user.oc1..aaaaaaaaxampleuser1234567890abcdef",
+        "ocid1.tenancy.oc1..aaaaaaaatemp1234567890abcdef"
+      ]
+    },
+    {
+      "id": "oci_api_key_fingerprint",
+      "name": "Oracle Cloud API Signing Key Fingerprint",
+      "category": "cloud",
+      "description": "Detects 16-pair hex API signing key fingerprints used in OCI CLI and SDK configuration profiles",
+      "pattern": "(?:fingerprint\\s*[=:]\\s*[\"']?|\\b)([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){15})\\b",
+      "replacementTemplate": "[OCI_FINGERPRINT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "20:3b:97:13:55:1c:5b:0d:d3:37:d8:50:4e:c5:42:e7"
+      ]
+    },
+    {
+      "id": "oci_auth_token",
+      "name": "Oracle Cloud Auth Token / Swift Secret",
+      "category": "cloud",
+      "description": "Matches OCI user auth tokens and Swift object storage credentials",
+      "pattern": "(?:auth_token|oci_token|swift_password|oci_auth)\\s*[=:]\\s*[\"']?([A-Za-z0-9/+=_~-]{16,64})[\"']?",
+      "replacementTemplate": "[OCI_AUTH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "auth_token = \"K=d89$bNqW_exampleToken\""
+      ]
+    },
+    {
+      "id": "password_field",
+      "name": "Password / Secret in Key-Value",
+      "category": "credentials",
+      "description": "Matches password or secret parameters in JSON, YAML, or URL query strings",
+      "pattern": "(?:password|passwd|pwd|client_secret|api_secret|user_password|auth_pass)[\"']?\\s*[:=]\\s*[\"']([^\"'\\s]{4,})[\"']",
+      "flags": "i",
+      "replacementTemplate": "[REDACTED_PASSWORD]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "basic_auth_url",
+      "name": "Basic Auth Embedded in URL",
+      "category": "credentials",
+      "description": "Detects username and password embedded in HTTP/HTTPS URLs",
+      "pattern": "\\b[a-zA-Z0-9+.-]+:\\/\\/[a-zA-Z0-9_.~%-]+:([^\\s@]+)@[a-zA-Z0-9.-]+",
+      "replacementTemplate": "[BASIC_AUTH_CREDENTIAL]",
+      "enabled": true,
+      "severity": "critical"
+    },
+    {
+      "id": "authorization_basic_header",
+      "name": "HTTP Basic Auth Base64 Header",
+      "category": "credentials",
+      "description": "Matches Base64 encoded Basic Authorization headers",
+      "pattern": "\\b(?:Basic\\s+)([A-Za-z0-9+/]{20,}={0,2})\\b",
+      "flags": "i",
+      "replacementTemplate": "[BASIC_AUTH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "bcrypt_hash",
+      "name": "BCrypt Password Hash",
+      "category": "credentials",
+      "description": "Detects 60-character standard BCrypt password hashes",
+      "pattern": "\\$2[abxy]\\$[0-9]{2}\\$[A-Za-z0-9./]{53}",
+      "replacementTemplate": "[BCRYPT_HASH_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "session_cookie",
+      "name": "Session ID / Auth Cookie",
+      "category": "credentials",
+      "description": "Matches session tokens, PHPSESSID, and auth cookie key-values",
+      "pattern": "(?:session_id|phpsessid|jsessionid|auth_token|connect\\.sid)\\s*=\\s*([a-zA-Z0-9-_]{16,})",
+      "flags": "i",
+      "replacementTemplate": "[SESSION_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "high"
+    },
+    {
+      "id": "tomcat_user_credentials",
+      "name": "Apache Tomcat tomcat-users.xml Credentials",
+      "category": "credentials",
+      "description": "Matches plaintext passwords defined in Tomcat conf/tomcat-users.xml user definitions",
+      "pattern": "<user\\s+[^>]*?password=[\"']([^\"']+)[\"'][^>]*?>",
+      "replacementTemplate": "<user [REDACTED_TOMCAT_CREDENTIALS] />",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "<user username=\"admin\" password=\"secretPassword123\" roles=\"manager-gui,admin-gui\"/>"
+      ]
+    },
+    {
+      "id": "tomcat_jndi_datasource_password",
+      "name": "Apache Tomcat server.xml Datasource Password",
+      "category": "credentials",
+      "description": "Detects database passwords declared in Tomcat conf/server.xml and conf/context.xml Resource tags",
+      "pattern": "<Resource\\s+[^>]*?password=[\"']([^\"']+)[\"'][^>]*?>",
+      "replacementTemplate": "<Resource [REDACTED_DATASOURCE_CREDENTIALS] />",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "<Resource name=\"jdbc/TestDB\" auth=\"Container\" type=\"javax.sql.DataSource\" password=\"dbSecretPassword\"/>"
+      ]
+    },
+    {
+      "id": "tomcat_keystore_password",
+      "name": "Apache Tomcat Keystore / SSL Connector Password",
+      "category": "credentials",
+      "description": "Detects SSL/TLS keystorePass and truststorePass attributes in Tomcat connector definitions",
+      "pattern": "(?:keystorePass|truststorePass|certificateKeystorePassword|keyPass)\\s*=\\s*[\"']([^\"']+)[\"']",
+      "replacementTemplate": "[TOMCAT_KEYSTORE_PASSWORD]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "keystorePass=\"changeit\"",
+        "certificateKeystorePassword=\"secureKeyPass\""
+      ]
+    },
+    {
+      "id": "tomcat_jmx_password",
+      "name": "Apache Tomcat JMX Remote Auth Password",
+      "category": "credentials",
+      "description": "Detects JMX monitoring and control passwords in jmxremote.password files",
+      "pattern": "\\b(?:monitorRole|controlRole)\\s+([^\\s\\r\\n#]{4,})",
+      "replacementTemplate": "[TOMCAT_JMX_SECRET]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "controlRole Qwerty123456",
+        "monitorRole ReadOnlyPass"
+      ]
+    },
+    {
+      "id": "email_address",
+      "name": "Email Address",
+      "category": "pii",
+      "description": "Matches personal and corporate email addresses",
+      "pattern": "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b",
+      "replacementTemplate": "[EMAIL_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "alice.smith@acme-corp.com",
+        "john.doe@gmail.com"
+      ]
+    },
+    {
+      "id": "phone_number",
+      "name": "Phone Number (Intl / Domestic)",
+      "category": "pii",
+      "description": "Matches international and domestic telephone numbers",
+      "pattern": "(?<!\\w)(?:\\+?[1-9]\\d{0,2}[- .]?)?\\(?\\d{3}\\)?[- .]\\d{3}[- .]\\d{4}(?!\\w)",
+      "replacementTemplate": "[PHONE_{INDEX}]",
+      "enabled": true,
+      "severity": "medium",
+      "examples": [
+        "+1-555-867-5309",
+        "(415) 555-0199",
+        "555-123-4567"
+      ]
+    },
+    {
+      "id": "ssn_number",
+      "name": "US Social Security Number (SSN)",
+      "category": "pii",
+      "description": "Matches 9-digit US Social Security Numbers",
+      "pattern": "\\b(?!000)\\d{3}[- ]?(?!00)\\d{2}[- ]?(?!0000)\\d{4}\\b",
+      "replacementTemplate": "[SSN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "123-45-6789",
+        "987 65 4321"
+      ]
+    },
+    {
+      "id": "uk_nino",
+      "name": "UK National Insurance Number (NINO)",
+      "category": "pii",
+      "description": "Matches standard UK National Insurance Numbers",
+      "pattern": "\\b[A-CEGHJ-PR-TW-ZQ]{1}[A-CEGHJ-NPR-TW-ZQ]{1}[0-9]{6}[A-DFMZ]{0,1}\\b",
+      "replacementTemplate": "[UK_NINO_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "QQ123456C",
+        "AB123456Z"
+      ]
+    },
+    {
+      "id": "canadian_sin",
+      "name": "Canadian Social Insurance Number (SIN)",
+      "category": "pii",
+      "description": "Matches 9-digit Canadian Social Insurance Numbers",
+      "pattern": "\\b[0-9]{3}[ -]?[0-9]{3}[ -]?[0-9]{3}\\b",
+      "replacementTemplate": "[CANADA_SIN_{INDEX}]",
+      "enabled": false,
+      "severity": "critical",
+      "examples": [
+        "046 454 286",
+        "123-456-789"
+      ]
+    },
+    {
+      "id": "indian_pan",
+      "name": "Indian Permanent Account Number (PAN)",
+      "category": "pii",
+      "description": "Matches 10-character Indian PAN Card numbers",
+      "pattern": "\\b[A-Z]{5}[0-9]{4}[A-Z]{1}\\b",
+      "replacementTemplate": "[PAN_CARD_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "ABCDE1234F",
+        "BKZPS9821K"
+      ]
+    },
+    {
+      "id": "indian_aadhaar",
+      "name": "Indian Aadhaar Number (UIDAI)",
+      "category": "pii",
+      "description": "Matches 12-digit Indian Aadhaar card identifiers",
+      "pattern": "\\b[2-9]{1}[0-9]{3}[ -]?[0-9]{4}[ -]?[0-9]{4}\\b",
+      "replacementTemplate": "[AADHAAR_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "3675 9834 6012",
+        "9821-4821-1120"
+      ]
+    },
+    {
+      "id": "passport_number",
+      "name": "International Passport Number",
+      "category": "pii",
+      "description": "Detects standard 9-character international and US passport numbers",
+      "pattern": "\\b[A-Z][0-9]{8}\\b|\\b[A-Z0-9]{9}\\b",
+      "replacementTemplate": "[PASSPORT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "A12345678",
+        "C98765432"
+      ]
+    },
+    {
+      "id": "gcc_qatar_qid",
+      "name": "Qatar ID (QID) / Residency Permit",
+      "category": "pii",
+      "description": "Matches 11-digit Qatar Civil ID and Residency Permits (QID)",
+      "pattern": "\\b[23]\\d{2}[0-9]{3}\\d{5}\\b",
+      "replacementTemplate": "[QATAR_QID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "28463401234",
+        "30163405678"
+      ]
+    },
+    {
+      "id": "gcc_uae_emirates_id",
+      "name": "UAE Emirates ID",
+      "category": "pii",
+      "description": "Matches 15-digit UAE Federal Authority for Identity & Citizenship Emirates ID numbers",
+      "pattern": "\\b784[- ]?[12]\\d{3}[- ]?\\d{7}[- ]?\\d\\b",
+      "replacementTemplate": "[EMIRATES_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "784-1990-1234567-1",
+        "784-2002-9876543-2",
+        "784198512345671"
+      ]
+    },
+    {
+      "id": "gcc_saudi_id_iqama",
+      "name": "Saudi National ID / Iqama Resident Permit",
+      "category": "pii",
+      "description": "Matches 10-digit Saudi National ID cards (1xxxxxxxxx) and Iqama resident permits (2xxxxxxxxx)",
+      "pattern": "\\b[12]\\d{9}\\b",
+      "replacementTemplate": "[SAUDI_ID_IQAMA_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "1029384756",
+        "2394857102"
+      ]
+    },
+    {
+      "id": "gcc_kuwait_civil_id",
+      "name": "Kuwait Civil ID / PACI Card",
+      "category": "pii",
+      "description": "Matches 12-digit Kuwait Public Authority for Civil Information (PACI) Civil IDs",
+      "pattern": "\\b[23]\\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01])\\d{5}\\b",
+      "replacementTemplate": "[KUWAIT_CIVIL_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "290010112345",
+        "301122554321"
+      ]
+    },
+    {
+      "id": "gcc_oman_civil_id",
+      "name": "Oman Civil Number / Resident ID",
+      "category": "pii",
+      "description": "Matches 8 to 9-digit Royal Oman Police (ROP) Civil Numbers and Resident Cards",
+      "pattern": "\\b[1-9]\\d{7,8}\\b",
+      "replacementTemplate": "[OMAN_CIVIL_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "12345678",
+        "876543210"
+      ]
+    },
+    {
+      "id": "gcc_passport",
+      "name": "GCC Passport Number (Saudi, UAE, Qatar, Kuwait, Oman)",
+      "category": "pii",
+      "description": "Matches standard passport numbers for Saudi Arabia, UAE, Qatar, Kuwait, and Oman",
+      "pattern": "\\b(?:[GL][0-9]{7,8}|[A-Z][0-9]{7,8}|[A-Z][0-9]{6})\\b",
+      "replacementTemplate": "[GCC_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "G1234567",
+        "L9876543",
+        "A87654321"
+      ]
+    },
+    {
+      "id": "medical_record_number",
+      "name": "Medical Record Number (MRN)",
+      "category": "phi",
+      "description": "Matches hospital and clinical patient Medical Record Numbers",
+      "pattern": "(?:mrn|medical[_-]?record[_-]?number|patient[_-]?id)[\\s:=#]+([A-Z0-9-]{6,14})",
+      "flags": "i",
+      "replacementTemplate": "[MRN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "MRN: 98214812",
+        "patient_id = HOSP-9921-A"
+      ]
+    },
+    {
+      "id": "npi_provider_id",
+      "name": "National Provider Identifier (NPI)",
+      "category": "phi",
+      "description": "Matches 10-digit US National Provider Identifiers for healthcare professionals",
+      "pattern": "(?:npi|provider[_-]?id|physician[_-]?npi)[\\s:=#]+([0-9]{10})",
+      "flags": "i",
+      "replacementTemplate": "[NPI_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "NPI: 1234567890",
+        "provider_id=9876543210"
+      ]
+    },
+    {
+      "id": "health_insurance_claim",
+      "name": "Health Insurance Claim Number (HICN)",
+      "category": "phi",
+      "description": "Detects Medicare and private health insurance claim numbers",
+      "pattern": "\\b[0-9]{9}[A-Z]{1,2}[0-9]?\\b|\\b[A-Z]{1,3}[0-9]{6,9}\\b",
+      "replacementTemplate": "[HICN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "123456789A",
+        "987654321B1"
+      ]
+    },
+    {
+      "id": "health_plan_member_id",
+      "name": "Health Plan / Insurance Member ID",
+      "category": "phi",
+      "description": "Detects healthcare policy numbers and beneficiary IDs",
+      "pattern": "(?:member[_-]?id|insurance[_-]?id|policy[_-]?number|beneficiary[_-]?id)[\\s:=#]+([A-Z0-9-]{7,16})",
+      "flags": "i",
+      "replacementTemplate": "[MEMBER_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "member_id = UHC-9821948",
+        "policy_number: BCBS-883192"
+      ]
+    },
+    {
+      "id": "credit_card",
+      "name": "Credit & Debit Card Number",
+      "category": "financial",
+      "description": "Detects Visa, Mastercard, Amex, Discover, Diners numbers with Luhn verification",
+      "pattern": "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\\d{3})\\d{11}|\\d{4}[- ]\\d{4}[- ]\\d{4}[- ]\\d{4})\\b",
+      "replacementTemplate": "[CARD_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "4532-1488-9234-1120",
+        "5425 2334 3211 4452"
+      ]
+    },
+    {
+      "id": "iban_number",
+      "name": "International Bank Account Number (IBAN)",
+      "category": "financial",
+      "description": "Matches standard 15 to 34-character International Bank Account Numbers",
+      "pattern": "\\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}\\b",
+      "replacementTemplate": "[IBAN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "GB29NWBK60161331926819",
+        "DE89370400440532013000"
+      ]
+    },
+    {
+      "id": "aba_routing",
+      "name": "US ABA Bank Routing Transit Number",
+      "category": "financial",
+      "description": "Detects 9-digit US Federal Reserve ABA bank routing numbers",
+      "pattern": "\\b((?:0[1-9])|(?:1[0-2])|(?:2[1-9])|(?:3[0-2])|(?:6[1-9])|(?:7[0-2])|(?:80))\\d{7}\\b",
+      "replacementTemplate": "[ROUTING_NUM_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "021000021",
+        "121000358"
+      ]
+    },
+    {
+      "id": "swift_bic_code",
+      "name": "SWIFT / BIC Banking Code",
+      "category": "financial",
+      "description": "Matches 8 or 11-character global bank identifier codes (SWIFT/BIC)",
+      "pattern": "\\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b",
+      "replacementTemplate": "[SWIFT_BIC_{INDEX}]",
+      "enabled": true,
+      "severity": "medium",
+      "examples": [
+        "CHASUS33",
+        "DEUTDEDBFXX"
+      ]
+    },
+    {
+      "id": "ipv4_address",
+      "name": "IPv4 Address",
+      "category": "network",
+      "description": "Matches standard IPv4 addresses (excluding version numbers and loopback)",
+      "pattern": "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b",
+      "replacementTemplate": "[IP_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "192.168.1.105",
+        "10.240.0.1",
+        "172.16.31.254"
+      ]
+    },
+    {
+      "id": "ipv6_address",
+      "name": "IPv6 Address",
+      "category": "network",
+      "description": "Matches IPv6 addresses with colon notation",
+      "pattern": "\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b|\\b(?:[0-9a-fA-F]{1,4}:){1,7}:\\b|\\b:(?::[0-9a-fA-F]{1,4}){1,7}\\b",
+      "replacementTemplate": "[IPV6_{INDEX}]",
+      "enabled": true,
+      "severity": "medium",
+      "examples": [
+        "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        "fe80::1"
+      ]
+    },
+    {
+      "id": "mac_address",
+      "name": "Hardware MAC Address",
+      "category": "network",
+      "description": "Matches hardware Ethernet/Wi-Fi MAC addresses",
+      "pattern": "\\b(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})\\b",
+      "replacementTemplate": "[MAC_{INDEX}]",
+      "enabled": true,
+      "severity": "medium",
+      "examples": [
+        "00:1B:44:11:3A:B7",
+        "00-14-22-01-23-45"
+      ]
+    },
+    {
+      "id": "internal_hostname",
+      "name": "Internal Hostname & FQDN",
+      "category": "network",
+      "description": "Detects internal corporate domains (.internal, .corp, .local, .lan, .priv)",
+      "pattern": "\\b[a-zA-Z0-9-_]+(?:\\.[a-zA-Z0-9-_]+)*\\.(?:internal|corp|local|lan|priv|intranet)\\b",
+      "replacementTemplate": "[INTERNAL_HOST_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "k8s-worker-01.us-east.corp.internal",
+        "auth-service.api.priv"
+      ]
+    },
+    {
+      "id": "gcc_mobile_saudi",
+      "name": "Saudi Arabia Mobile Number (KSA)",
+      "category": "pii",
+      "description": "Matches Saudi Arabia mobile numbers in international (+966) or local (05x) format across STC, Mobily, and Zain networks.",
+      "pattern": "(?:(?:(?:\\+|00)966[- ]?|(?<!\\d)0)?5[0-9]{1}[- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[SAUDI_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+966 50 123 4567",
+        "+966-55-987-6543",
+        "0541234567",
+        "058 765 4321"
+      ]
+    },
+    {
+      "id": "gcc_mobile_uae",
+      "name": "UAE Mobile Number (e& / du)",
+      "category": "pii",
+      "description": "Matches United Arab Emirates mobile phone numbers in international (+971) or local (05x) format.",
+      "pattern": "(?:(?:(?:\\+|00)971[- ]?|(?<!\\d)0)?5[024568][- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[UAE_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+971 50 123 4567",
+        "+971-55-987-6543",
+        "050 123 4567",
+        "0561234567"
+      ]
+    },
+    {
+      "id": "gcc_mobile_qatar",
+      "name": "Qatar Mobile Number (Ooredoo / Vodafone)",
+      "category": "pii",
+      "description": "Matches Qatar 8-digit mobile phone numbers starting with prefixes 3, 5, 6, 7 with optional +974 country code.",
+      "pattern": "(?:(?:(?:\\+|00)974[- ]?)?[3567][0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[QATAR_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+974 3312 3456",
+        "+974-5512-3456",
+        "66123456",
+        "7712 3456"
+      ]
+    },
+    {
+      "id": "gcc_mobile_kuwait",
+      "name": "Kuwait Mobile Number (Zain / Ooredoo / STC)",
+      "category": "pii",
+      "description": "Matches Kuwait 8-digit mobile numbers starting with prefixes 5, 6, 9 with optional +965 country code.",
+      "pattern": "(?:(?:(?:\\+|00)965[- ]?)?[569][0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[KUWAIT_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+965 5123 4567",
+        "+965-6612-3456",
+        "99123456",
+        "+965 9876 5432"
+      ]
+    },
+    {
+      "id": "gcc_mobile_oman",
+      "name": "Oman Mobile Number (Omantel / Ooredoo / Vodafone)",
+      "category": "pii",
+      "description": "Matches Sultanate of Oman 8-digit mobile numbers starting with prefixes 7 or 9 with optional +968 country code.",
+      "pattern": "(?:(?:(?:\\+|00)968[- ]?)?[79][0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[OMAN_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+968 9123 4567",
+        "+968-7123-4567",
+        "98765432",
+        "+968 7901 2345"
+      ]
+    },
+    {
+      "id": "gcc_mobile_bahrain",
+      "name": "Bahrain Mobile Number (Batelco / Zain / STC)",
+      "category": "pii",
+      "description": "Matches Kingdom of Bahrain 8-digit mobile numbers starting with prefixes 3 or 6 with optional +973 country code.",
+      "pattern": "(?:(?:(?:\\+|00)973[- ]?)?[36][0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[BAHRAIN_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+973 3912 3456",
+        "+973-6612-3456",
+        "36123456",
+        "+973 3344 5566"
+      ]
+    },
+    {
+      "id": "gcc_mobile_unified",
+      "name": "GCC Mobile Phone Number (Unified 6 Nations)",
+      "category": "pii",
+      "description": "Unified detector capturing mobile numbers across all 6 GCC states (Saudi Arabia, UAE, Qatar, Kuwait, Oman, Bahrain).",
+      "pattern": "(?:(?:\\+|00)(?:(?:966[- ]?5[0-9]|971[- ]?5[024568])[- ]?[0-9]{3}[- ]?[0-9]{4}|(?:974[- ]?[3567]|965[- ]?[569]|968[- ]?[79]|973[- ]?[36])[0-9]{3}[- ]?[0-9]{4}))\\b",
+      "replacementTemplate": "[GCC_PHONE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+966 50 123 4567",
+        "+971 52 345 6789",
+        "+974 3312 3456",
+        "+965 5123 4567",
+        "+968 9123 4567",
+        "+973 3912 3456"
+      ]
+    },
+    {
+      "id": "java_stack_trace_callsite",
+      "name": "Java Stack Trace Line / Call Site",
+      "category": "devops",
+      "description": "Matches Java stack trace execution frames indicating package hierarchy, class, method, and source line numbers (including Java 9+ module prefixes).",
+      "pattern": "\\bat\\s+(?:[a-zA-Z0-9_$.]+\\/)?[a-zA-Z_$][a-zA-Z0-9_$.]*\\.[a-zA-Z_$][a-zA-Z0-9_$]*\\((?:[a-zA-Z0-9_$]+\\.java:\\d+|Native\\s+Method|Unknown\\s+Source)\\)",
+      "replacementTemplate": "[JAVA_STACK_TRACE]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "at com.corp.billing.PaymentService.processTransaction(PaymentService.java:142)",
+        "at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1067)",
+        "at java.base/java.lang.Thread.run(Thread.java:833)"
+      ]
+    },
+    {
+      "id": "java_exception_declaration",
+      "name": "Java Exception Declaration & Root Cause",
+      "category": "devops",
+      "description": "Matches Java runtime exceptions, standard errors, and 'Caused by:' exception chain declarations in logs.",
+      "pattern": "\\b(?:Exception in thread \\\"[^\\\"]*\\\"\\s+|Caused by:\\s+)?(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)+(?:[a-zA-Z0-9_$]+Exception|[a-zA-Z0-9_$]+Error)(?::\\s+[^\\r\\n]*)?",
+      "replacementTemplate": "[JAVA_EXCEPTION]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "java.lang.NullPointerException: Cannot invoke String.length() because str is null",
+        "Caused by: com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure",
+        "Exception in thread \"main\" java.lang.ClassNotFoundException: com.acme.Driver"
+      ]
+    },
+    {
+      "id": "java_framework_stack_frame",
+      "name": "Java Framework Stack Frame (Spring / Hibernate / Tomcat)",
+      "category": "devops",
+      "description": "Matches framework-specific internal traces (Spring Boot, Hibernate ORM, Apache Tomcat Catalina, HikariCP).",
+      "pattern": "\\b(?:org\\.springframework|org\\.hibernate|org\\.apache\\.catalina|com\\.zaxxer\\.hikari|jakarta\\.persistence|org\\.jboss)\\.[a-zA-Z0-9_$.]+\\([a-zA-Z0-9_$]+\\.java:\\d+\\)",
+      "replacementTemplate": "[FRAMEWORK_TRACE]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:334)",
+        "org.hibernate.internal.SessionImpl.beginTransaction(SessionImpl.java:1400)",
+        "com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:181)"
+      ]
+    },
+    {
+      "id": "java_jvm_oom_error",
+      "name": "JVM OutOfMemoryError Alert",
+      "category": "devops",
+      "description": "Detects Java Virtual Machine OutOfMemoryError notifications (Heap Space, Metaspace, GC Overhead Limit).",
+      "pattern": "\\bjava\\.lang\\.OutOfMemoryError:\\s+(?:Java heap space|Metaspace|GC overhead limit exceeded|Direct buffer memory|Requested array size exceeds VM limit)\\b",
+      "replacementTemplate": "[JVM_OOM_ALERT]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "java.lang.OutOfMemoryError: Java heap space",
+        "java.lang.OutOfMemoryError: Metaspace",
+        "java.lang.OutOfMemoryError: GC overhead limit exceeded"
+      ]
+    },
+    {
+      "id": "java_jdbc_sql_leak",
+      "name": "Java JDBC SQL Exception / Query Leak",
+      "category": "credentials",
+      "description": "Detects database query errors, syntax exceptions, and internal table structure leakage in Java SQL stack traces.",
+      "pattern": "\\b(?:java\\.sql\\.SQLException|org\\.hibernate\\.exception\\.SQLGrammarException|org\\.postgresql\\.util\\.PSQLException|com\\.mysql\\.cj\\.jdbc\\.exceptions\\.[a-zA-Z]+)(?::\\s+[^\\r\\n]+)?",
+      "replacementTemplate": "[SQL_EXCEPTION_LEAK]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "java.sql.SQLException: Access denied for user 'app_user'@'10.0.1.4' (using password: YES)",
+        "org.hibernate.exception.SQLGrammarException: could not prepare statement [SELECT * FROM users WHERE ssn = ?]",
+        "org.postgresql.util.PSQLException: ERROR: relation \"accounts_internal\" does not exist"
+      ]
+    },
+    {
+      "id": "java_thread_dump_header",
+      "name": "Java JVM Thread Dump Header",
+      "category": "devops",
+      "description": "Matches JVM thread dump diagnostic declarations containing thread IDs, states, and native thread pointers.",
+      "pattern": "^\\\"[^\\\"]+\\\"\\s+(?:#\\d+\\s+)?(?:daemon\\s+)?prio=\\d+\\s+os_prio=\\d+\\s+(?:cpu=[0-9.]+ms\\s+)?(?:elapsed=[0-9.]+s\\s+)?tid=0x[0-9a-fA-F]+\\s+nid=0x[0-9a-fA-F]+",
+      "flags": "m",
+      "replacementTemplate": "[JVM_THREAD_HEADER]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "\"http-nio-8080-exec-1\" #24 daemon prio=5 os_prio=0 cpu=120.45ms elapsed=42.10s tid=0x00007f9c8401a000 nid=0x1a2b",
+        "\"DestroyJavaVM\" #42 prio=5 os_prio=0 tid=0x00007f8b9c001800 nid=0x1102"
+      ]
+    },
+    {
+      "id": "angular_error_code",
+      "name": "Angular Error Code (NG0xxx)",
+      "category": "devops",
+      "description": "Matches Angular runtime error diagnostic codes and descriptions (e.g. NG0100, NG0200, NG0201).",
+      "pattern": "\\bNG0\\d{3,4}(?::\\s+[^\\r\\n]+)?",
+      "replacementTemplate": "[ANGULAR_ERROR_CODE]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "NG0100: ExpressionChangedAfterItHasBeenCheckedError: Expression has changed after it was checked.",
+        "NG0200: Circular dependency in DI detected for ServiceA -> ServiceB -> ServiceA.",
+        "NG0201: No provider for HttpClient found in R3Injector."
+      ]
+    },
+    {
+      "id": "angular_null_injector_error",
+      "name": "Angular NullInjectorError / Missing Provider",
+      "category": "devops",
+      "description": "Matches Angular dependency injection failures, R3Injector traces, and missing token errors in console logs.",
+      "pattern": "\\bNullInjectorError:\\s+R3InjectorError\\([^)]+\\)\\[[^\\]]+\\]:\\s+No provider for\\s+[A-Za-z0-9_$]+!?",
+      "replacementTemplate": "[ANGULAR_INJECTOR_ERROR]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "NullInjectorError: R3InjectorError(AppModule)[AuthService -> HttpClient]: No provider for HttpClient!",
+        "NullInjectorError: R3InjectorError(UserModule)[UserService -> ConfigToken]: No provider for ConfigToken"
+      ]
+    },
+    {
+      "id": "angular_expression_changed_error",
+      "name": "Angular ExpressionChangedAfterItHasBeenCheckedError",
+      "category": "devops",
+      "description": "Detects Angular change detection cycle discrepancies reporting previous vs current evaluated states.",
+      "pattern": "\\bExpressionChangedAfterItHasBeenCheckedError:\\s+Previous value:\\s+'[^']*'\\.\\s+Current value:\\s+'[^']*'",
+      "replacementTemplate": "[ANGULAR_EXPRESSION_ERROR]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "ExpressionChangedAfterItHasBeenCheckedError: Previous value: 'false'. Current value: 'true'. Expression has changed",
+        "ExpressionChangedAfterItHasBeenCheckedError: Previous value: 'loading'. Current value: 'ready'."
+      ]
+    },
+    {
+      "id": "angular_zonejs_trace",
+      "name": "Angular Zone.js Stack Trace Dump",
+      "category": "devops",
+      "description": "Matches internal Angular Zone.js asynchronous task tracking frames that clutter frontend console logs.",
+      "pattern": "\\bat\\s+(?:(?:ZoneDelegate|ZoneTask|_ZoneDelegate)\\.[a-zA-Z0-9_$]+|drainMicroTaskQueue|timer|[a-zA-Z0-9_$]+)\\s*\\([^)]*zone(?:\\.umd)?\\.js:\\d+:\\d+\\)",
+      "replacementTemplate": "[ZONEJS_STACK_TRACE]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "at ZoneDelegate.invokeTask (zone.js:406:31)",
+        "at drainMicroTaskQueue (zone.js:582:35)",
+        "at timer (zone.js:2550:29)"
+      ]
+    },
+    {
+      "id": "angular_bundle_source_ref",
+      "name": "Angular Webpack / Bundle Source Path Reference",
+      "category": "devops",
+      "description": "Matches Angular Webpack internal module paths and source map references exposing client directory layout.",
+      "pattern": "(?<![\\w/])(?:webpack-internal:\\/\\/\\/|webpack:\\/\\/\\/|ng:\\/\\/\\/|\\.\\/src\\/app\\/)[a-zA-Z0-9_\\-\\/.]+\\.(?:ts|js|html)(?::\\d+:\\d+)?",
+      "replacementTemplate": "[ANGULAR_SOURCE_PATH]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "webpack-internal:///./src/app/core/services/auth.service.ts:42:15",
+        "webpack:///src/app/features/admin/dashboard.component.html:12:4",
+        "./src/app/shared/components/navbar.component.ts:89:12"
+      ]
+    },
+    {
+      "id": "angular_template_parse_error",
+      "name": "Angular Template Compiler / Parse Error",
+      "category": "devops",
+      "description": "Detects Angular Ahead-of-Time (AOT) and Just-in-Time (JIT) template compilation and element binding errors.",
+      "pattern": "\\bTemplate parse errors:\\s*Can't bind to '[^']+' since it isn't a known property of '[^']+'",
+      "replacementTemplate": "[ANGULAR_TEMPLATE_ERROR]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "Template parse errors: Can't bind to 'ngModel' since it isn't a known property of 'input'.",
+        "Template parse errors: Can't bind to 'userPermissions' since it isn't a known property of 'app-admin-panel'."
+      ]
+    },
+    {
+      "id": "dev_localhost_url",
+      "name": "Localhost & Local Loopback Dev URL",
+      "category": "network",
+      "description": "Matches developer workstation URLs pointing to localhost or 127.0.0.1 with local development port numbers.",
+      "pattern": "\\bhttps?:\\/\\/(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0):[0-9]{2,5}(?:\\/[^\\s\\\"'`]*)?",
+      "replacementTemplate": "[DEV_LOCAL_URL_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "http://localhost:3000/api/v1/auth",
+        "https://127.0.0.1:8443/swagger-ui/index.html",
+        "http://localhost:4200/dashboard"
+      ]
+    },
+    {
+      "id": "dev_private_network_ip",
+      "name": "Internal RFC 1918 Private IP with Port",
+      "category": "network",
+      "description": "Matches private RFC 1918 IPv4 addresses (10.x.x.x, 172.16-31.x.x, 192.168.x.x) with optional service ports.",
+      "pattern": "\\b(?:10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}|172\\.(?:1[6-9]|2\\d|3[01])\\.\\d{1,3}\\.\\d{1,3})(?::\\d{2,5})?\\b",
+      "replacementTemplate": "[PRIVATE_IP_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "10.0.4.15:8080",
+        "192.168.1.100:5432",
+        "172.20.10.4",
+        "10.128.0.5:9092"
+      ]
+    },
+    {
+      "id": "dev_internal_hostname",
+      "name": "Internal Corporate & Dev Hostname / FQDN",
+      "category": "network",
+      "description": "Matches internal network domain suffixes commonly used in corporate dev/staging environments (.corp, .internal, .local, .lan).",
+      "pattern": "\\b[a-zA-Z0-9-_]+(?:\\.[a-zA-Z0-9-_]+)*\\.(?:local|internal|corp|lan|test|corp\\.internal|dev\\.internal)\\b(?::\\d{2,5})?",
+      "replacementTemplate": "[DEV_INTERNAL_HOST_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "db-primary.prod.corp.internal:5432",
+        "k8s-master.stage.internal",
+        "api-gateway.corp:8443",
+        "gitlab.dev.internal"
+      ]
+    },
+    {
+      "id": "dev_git_auth_remote_url",
+      "name": "Git Remote URL with Embedded Credentials / PAT",
+      "category": "credentials",
+      "description": "Matches Git clone/remote URLs containing embedded usernames, personal access tokens (PAT), or passwords.",
+      "pattern": "\\bhttps?:\\/\\/[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.~%!$&'()*+,;=-]+@[a-zA-Z0-9_.-]+\\.[a-zA-Z]{2,}(?:\\/[^\\s\\\"'`]*)?",
+      "replacementTemplate": "[GIT_AUTH_URL_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "https://oauth2:my_token_sample_12345@github.com/org/repo.git",
+        "https://gitlab-ci-token:glpat_sample_token_xyz@gitlab.corp.internal/backend.git",
+        "https://admin:SuperSecretPass123!@bitbucket.org/project/app.git"
+      ]
+    },
+    {
+      "id": "dev_git_commit_hash",
+      "name": "Git Commit SHA Hash (SHA-1 / SHA-256)",
+      "category": "devops",
+      "description": "Matches 40-character SHA-1 or 64-character SHA-256 commit hashes and release shas in build and deployment logs.",
+      "pattern": "\\b[0-9a-f]{40}\\b|\\b[0-9a-f]{64}\\b",
+      "replacementTemplate": "[GIT_COMMIT_HASH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "e4d909c290d0fb1ca068ffaddf22cbd0adddef19",
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+      ]
+    },
+    {
+      "id": "dev_local_filesystem_path",
+      "name": "Developer Local Filesystem Absolute Path",
+      "category": "devops",
+      "description": "Matches developer home directories and project paths across Linux, macOS, and Windows workstation environments.",
+      "pattern": "(?:\\/(?:home|Users)\\/[a-zA-Z0-9_.-]+\\/[a-zA-Z0-9_\\-\\/.@]+|[a-zA-Z]:\\\\(?:Users|Projects|workspace|dev)\\\\[a-zA-Z0-9_\\-\\.\\\\]+)",
+      "replacementTemplate": "[DEV_FILEPATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "/home/john/projects/maskr/src/engine/rules.ts",
+        "/Users/sarah/workspace/backend-api/config/secrets.json",
+        "C:\\Users\\administrator\\workspace\\financial-engine\\src\\App.java"
+      ]
+    },
+    {
+      "id": "dev_database_connection_uri",
+      "name": "Database Connection URI with Credentials",
+      "category": "credentials",
+      "description": "Matches database connection strings with embedded credentials (PostgreSQL, MySQL, MongoDB, Redis, JDBC).",
+      "pattern": "\\b(?:jdbc:[a-z]+:\\/\\/|mongodb(?:\\+srv)?:\\/\\/|postgres(?:ql)?:\\/\\/|mysql:\\/\\/|redis:\\/\\/)[a-zA-Z0-9_.-]+:[^@\\s\\\"'<>]+@[a-zA-Z0-9_.-]+(?::\\d+)?(?:\\/[^\\s\\\"'`]*)?",
+      "replacementTemplate": "[DATABASE_CONNECTION_URI_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "postgresql://postgres:MySecurePassword123@db.prod.internal:5432/customer_db",
+        "mongodb+srv://admin:ClusterSecret99@cluster0.abcde.mongodb.net/production",
+        "redis://default:redis_auth_token_987@cache-01.corp.internal:6379/0"
+      ]
+    },
+    {
+      "id": "dev_http_auth_header",
+      "name": "HTTP Authorization Header Secret",
+      "category": "credentials",
+      "description": "Matches Bearer and Basic authentication headers in cURL requests, API logs, and HTTP request headers.",
+      "pattern": "\\b(?:Authorization:\\s+)?(?:Bearer\\s+[a-zA-Z0-9_\\-\\.]{25,}|Basic\\s+[a-zA-Z0-9+\\/=]{16,})\\b",
+      "replacementTemplate": "[AUTH_HEADER_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abcde",
+        "Authorization: Basic dXNlcm5hbWU6c3VwZXJfc2VjcmV0X3Bhc3N3b3JkXzEyMw==",
+        "Bearer sample_authorization_token_string_example_12345"
+      ]
+    },
+    {
+      "id": "dev_package_manager_token",
+      "name": "Package Manager Registry Auth Token (.npmrc / Maven)",
+      "category": "credentials",
+      "description": "Matches NPM registry auth tokens (//registry.npmjs.org/:_authToken=npm_xxx), PyPI tokens, and Maven credentials.",
+      "pattern": "(?<![\\w/])(?:\\/\\/registry\\.npmjs\\.org\\/:_authToken=[^\\s\\\"'`]+|npm_[a-zA-Z0-9]{30,40}|pypi-AgEIcHlwaS5vcmc[a-zA-Z0-9_\\-]{30,})\\b",
+      "replacementTemplate": "[PACKAGE_REGISTRY_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "//registry.npmjs.org/:_authToken=sample_registry_auth_token_value_12345",
+        "npm_SampleAuthTokenPlaceholderValue987654",
+        "pypi-AgEIcHlwaS5vcmcSamplePlaceholderTokenDoNotUseInRealProduction12345678"
+      ]
+    },
+    {
+      "id": "dev_env_secret_assignment",
+      "name": "Environment Variable Secret Assignment (.env / logs)",
+      "category": "credentials",
+      "description": "Matches environment variable secret assignments (KEY=value, SECRET=value, PASSWORD=value) in terminal outputs and configs.",
+      "pattern": "\\b(?:[A-Z0-9_]*(?:SECRET|PASSWORD|PASSWD|APIKEY|API_KEY|TOKEN|AUTH|CREDENTIAL)[A-Z0-9_]*)\\s*=\\s*['\\\"]?([^\\s'\\\"`]{8,})['\\\"]?",
+      "replacementTemplate": "[ENV_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "DATABASE_PASSWORD=SuperSecretPass123!",
+        "STRIPE_API_KEY=sample_stripe_mock_token_12345",
+        "JWT_SIGNING_SECRET=my_ultra_secure_signing_secret_key"
+      ]
+    },
+    {
+      "id": "dev_jwt_auth_token",
+      "name": "JSON Web Token (JWT)",
+      "category": "credentials",
+      "description": "Matches standard three-part base64url encoded JSON Web Tokens (JWT) used for session and API authorization.",
+      "pattern": "\\beyJ[a-zA-Z0-9_-]{10,}\\.eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_\\-]{10,}\\b",
+      "replacementTemplate": "[JWT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      ]
+    },
+    {
+      "id": "pii_mobile_us_ca",
+      "name": "US & Canada Mobile / Telephone (NANP)",
+      "category": "pii",
+      "description": "Matches North American Numbering Plan phone and mobile numbers in +1, (xxx) xxx-xxxx, and hyphenated formats.",
+      "pattern": "(?:\\+1[-. ]?)?(?:\\(?([2-9][0-8][0-9])\\)?[-. ]?)([2-9][0-9]{2})[-. ]?([0-9]{4})\\b",
+      "replacementTemplate": "[US_PHONE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+1 (555) 234-5678",
+        "555-839-2001",
+        "1-800-555-0199",
+        "(415) 890-1234"
+      ]
+    },
+    {
+      "id": "pii_mobile_uk",
+      "name": "United Kingdom Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches UK mobile phone numbers starting with 07 or international prefix +44 7.",
+      "pattern": "(?:(?:\\+44[- ]?|0)7[0-9]{3}[- ]?[0-9]{3}[- ]?[0-9]{3}|(?:\\+44[- ]?|0)7[0-9]{2}[- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[UK_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+44 7911 123456",
+        "07700 900123",
+        "+44-7890-123456"
+      ]
+    },
+    {
+      "id": "pii_mobile_india",
+      "name": "India Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches 10-digit Indian mobile numbers beginning with 6, 7, 8, or 9 with optional +91 or 0 prefix.",
+      "pattern": "(?:(?:\\+91[- ]?|0)?[6-9][0-9]{4}[- ]?[0-9]{5})\\b",
+      "replacementTemplate": "[INDIA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+91 98765 43210",
+        "9123456780",
+        "+91-80123-45678",
+        "09876543210"
+      ]
+    },
+    {
+      "id": "pii_mobile_germany",
+      "name": "Germany Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches German mobile phone numbers starting with 015, 016, 017 or international prefix +49.",
+      "pattern": "(?:(?:\\+49[- ]?|0)1[567][0-9][- ]?[0-9]{3,4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[GERMANY_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+49 151 12345678",
+        "0170 1234567",
+        "+49-160-98765432"
+      ]
+    },
+    {
+      "id": "pii_mobile_france",
+      "name": "France Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches French mobile phone numbers beginning with 06 or 07 or international prefix +33.",
+      "pattern": "(?:(?:\\+33[- ]?|0)[67](?:[-. ]?[0-9]{2}){4})\\b",
+      "replacementTemplate": "[FRANCE_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+33 6 12 34 56 78",
+        "07 98 76 54 32",
+        "0612345678"
+      ]
+    },
+    {
+      "id": "pii_mobile_spain",
+      "name": "Spain Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Spanish 9-digit mobile phone numbers beginning with 6 or 7, with optional +34 prefix.",
+      "pattern": "(?:(?:\\+34[- ]?)?[67][0-9]{2}[- ]?[0-9]{3}[- ]?[0-9]{3})\\b",
+      "replacementTemplate": "[SPAIN_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+34 612 345 678",
+        "712345678",
+        "+34-600-123456"
+      ]
+    },
+    {
+      "id": "pii_mobile_italy",
+      "name": "Italy Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Italian mobile numbers beginning with prefix 3 and 9 or 10 digits with optional +39.",
+      "pattern": "(?:(?:\\+39[- ]?)?3[0-9]{2}[- ]?[0-9]{3,4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[ITALY_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+39 347 1234567",
+        "335 1234567",
+        "+39-320-1234567"
+      ]
+    },
+    {
+      "id": "pii_mobile_netherlands",
+      "name": "Netherlands Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Dutch mobile numbers beginning with 06 or international prefix +31 6.",
+      "pattern": "(?:(?:\\+31[- ]?|0)6[- ]?[0-9]{4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[NETHERLANDS_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+31 6 12345678",
+        "06 12345678",
+        "+31-6-87654321"
+      ]
+    },
+    {
+      "id": "pii_mobile_australia",
+      "name": "Australia Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Australian mobile numbers starting with 04 or international prefix +61 4.",
+      "pattern": "(?:(?:\\+61[- ]?|0)4[0-9]{2}[- ]?[0-9]{3}[- ]?[0-9]{3})\\b",
+      "replacementTemplate": "[AUSTRALIA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+61 412 345 678",
+        "0412 345 678",
+        "+61-400-123-456"
+      ]
+    },
+    {
+      "id": "pii_mobile_new_zealand",
+      "name": "New Zealand Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches New Zealand mobile numbers starting with 02 or international prefix +64 2.",
+      "pattern": "(?:(?:\\+64[- ]?|0)2[0-9][- ]?[0-9]{3,4}[- ]?[0-9]{3,4})\\b",
+      "replacementTemplate": "[NZ_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+64 21 123 4567",
+        "027 123 4567",
+        "+64-22-987-6543"
+      ]
+    },
+    {
+      "id": "pii_mobile_singapore",
+      "name": "Singapore Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Singapore 8-digit mobile phone numbers beginning with 8 or 9.",
+      "pattern": "(?:(?:\\+65[- ]?)?[89][0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[SINGAPORE_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+65 9123 4567",
+        "8123 4567",
+        "+65-8765-4321"
+      ]
+    },
+    {
+      "id": "pii_mobile_japan",
+      "name": "Japan Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Japanese mobile numbers starting with 070, 080, 090 or international prefix +81.",
+      "pattern": "(?:(?:\\+81[- ]?|0)[789]0[- ]?[0-9]{4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[JAPAN_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+81 90 1234 5678",
+        "080-1234-5678",
+        "+81-70-9876-5432"
+      ]
+    },
+    {
+      "id": "pii_mobile_china",
+      "name": "China Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Mainland China 11-digit mobile phone numbers starting with 13-19.",
+      "pattern": "(?:(?:\\+86[- ]?)?1[3-9][0-9][- ]?[0-9]{4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[CHINA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+86 138 1234 5678",
+        "15912345678",
+        "+86-186-0000-1111"
+      ]
+    },
+    {
+      "id": "pii_mobile_brazil",
+      "name": "Brazil Mobile Phone Number (Celular)",
+      "category": "pii",
+      "description": "Matches Brazilian mobile numbers with optional 2-digit area code (DDD) and 9-digit phone starting with 9.",
+      "pattern": "(?:(?:\\+55[- ]?)?(?:\\(?([1-9]{2})\\)?[- ]?)?9[0-9]{4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[BRAZIL_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+55 11 98765-4321",
+        "(21) 99123-4567",
+        "11 98123-4567"
+      ]
+    },
+    {
+      "id": "pii_mobile_mexico",
+      "name": "Mexico Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Mexican 10-digit telephone and mobile numbers with optional +52 prefix.",
+      "pattern": "(?:(?:\\+52[- ]?(?:1[- ]?)?)?(?:[1-9][0-9]{1,2})[- ]?[0-9]{3,4}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[MEXICO_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+52 1 55 1234 5678",
+        "55 1234 5678",
+        "+52-81-8123-4567"
+      ]
+    },
+    {
+      "id": "pii_mobile_south_africa",
+      "name": "South Africa Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches South African mobile numbers starting with 06, 07, 08 or international prefix +27.",
+      "pattern": "(?:(?:\\+27[- ]?|0)[678][0-9][- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[SOUTH_AFRICA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+27 82 123 4567",
+        "072 123 4567",
+        "+27-83-987-6543"
+      ]
+    },
+    {
+      "id": "pii_mobile_nigeria",
+      "name": "Nigeria Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Nigerian mobile numbers starting with 07, 08, 09 or international prefix +234.",
+      "pattern": "(?:(?:\\+234[- ]?|0)[789][01][0-9][- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[NIGERIA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+234 803 123 4567",
+        "0802 345 6789",
+        "+234-909-123-4567"
+      ]
+    },
+    {
+      "id": "pii_mobile_indonesia",
+      "name": "Indonesia Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Indonesian mobile numbers starting with 08 or international prefix +62 8.",
+      "pattern": "(?:(?:\\+62[- ]?|0)8[1-9][0-9][- ]?[0-9]{3,4}[- ]?[0-9]{3,5})\\b",
+      "replacementTemplate": "[INDONESIA_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+62 812 3456 7890",
+        "0813 1234 567",
+        "+62-856-9876-5432"
+      ]
+    },
+    {
+      "id": "pii_mobile_philippines",
+      "name": "Philippines Mobile Phone Number",
+      "category": "pii",
+      "description": "Matches Philippine 10-digit mobile phone numbers starting with 9, with optional +63 or 0 prefix.",
+      "pattern": "(?:(?:\\+63[- ]?|0)9[0-9]{2}[- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
+      "replacementTemplate": "[PHILIPPINES_MOBILE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+63 917 123 4567",
+        "0918 234 5678",
+        "+63-920-345-6789"
+      ]
+    },
+    {
+      "id": "pii_phone_international_e164",
+      "name": "International E.164 Universal Phone Format",
+      "category": "pii",
+      "description": "Matches standard international E.164 phone numbers with leading plus sign and 8 to 15 digits.",
+      "pattern": "\\+[1-9][0-9]{0,2}(?:[-. ]?[0-9]{1,4}){2,5}\\b",
+      "replacementTemplate": "[INTL_PHONE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "+41 44 668 1800",
+        "+852 2123 4567",
+        "+46 8 123 456"
+      ]
+    },
+    {
+      "id": "fin_us_bank_account",
+      "name": "US Bank Account Number (ACH / Direct Deposit)",
+      "category": "financial",
+      "description": "Matches US bank account numbers (8-17 digits) appearing alongside financial account indicators.",
+      "pattern": "(?:account(?:\\s*number|\\s*no|\\s*#)?|acct(?:\\s*no|\\s*#)?|bank\\s*acct)\\s*[:=\\-]?\\s*\\b([0-9]{8,17})\\b",
+      "flags": "i",
+      "replacementTemplate": "[US_BANK_ACCOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Account Number: 123456789012",
+        "acct #: 9876543210",
+        "bank acct: 1029384756"
+      ]
+    },
+    {
+      "id": "fin_us_bank_routing_aba",
+      "name": "US ABA Bank Routing Transit Number",
+      "category": "financial",
+      "description": "Matches 9-digit US American Bankers Association (ABA) routing transit numbers with contextual indicator.",
+      "pattern": "(?:routing(?:\\s*number|\\s*no|\\s*#)?|aba(?:\\s*number|\\s*#)?|rtn)\\s*[:=\\-]?\\s*\\b(0[1-9][0-9]{7}|[123][0-2][0-9]{7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[US_ROUTING_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Routing Number: 021000021",
+        "ABA #: 121000358",
+        "Routing: 011000015"
+      ]
+    },
+    {
+      "id": "fin_uk_bank_account",
+      "name": "UK Bank Account Number",
+      "category": "financial",
+      "description": "Matches United Kingdom 8-digit bank account numbers accompanied by banking keywords.",
+      "pattern": "(?:account(?:\\s*number|\\s*no|\\s*#)?|acct(?:\\s*no|\\s*#)?|bank\\s*account)\\s*[:=\\-]?\\s*\\b([0-9]{8})\\b",
+      "flags": "i",
+      "replacementTemplate": "[UK_BANK_ACCOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Account No: 12345678",
+        "bank account: 87654321",
+        "Account #: 45678901"
+      ]
+    },
+    {
+      "id": "fin_uk_sort_code",
+      "name": "UK Bank Sort Code",
+      "category": "financial",
+      "description": "Matches UK 6-digit bank sort codes in XX-XX-XX format or with sort code label.",
+      "pattern": "(?:sort\\s*code\\s*[:=\\-]?\\s*)?\\b([0-9]{2}-[0-9]{2}-[0-9]{2})\\b",
+      "flags": "i",
+      "replacementTemplate": "[UK_SORT_CODE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "20-45-89",
+        "Sort code: 40-47-84",
+        "60-83-71"
+      ]
+    },
+    {
+      "id": "fin_india_bank_account",
+      "name": "India Bank Account Number",
+      "category": "financial",
+      "description": "Matches 9 to 18-digit Indian bank account numbers associated with banking keywords.",
+      "pattern": "(?:a\\/c(?:\\s*no|\\s*number)?|account(?:\\s*number|\\s*no)?|bank\\s*a\\/c)\\s*[:=\\-]?\\s*\\b([0-9]{9,18})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INDIA_BANK_ACCOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "A/C No: 100023456789",
+        "account number: 50100234567890",
+        "bank a/c: 91827364501928"
+      ]
+    },
+    {
+      "id": "fin_india_ifsc_code",
+      "name": "India IFSC Banking Code",
+      "category": "financial",
+      "description": "Matches Indian Financial System Code (IFSC) composed of 4 alphabetic bank characters, zero, and 6 branch alphanumeric characters.",
+      "pattern": "\\b[A-Z]{4}0[A-Z0-9]{6}\\b",
+      "replacementTemplate": "[IFSC_CODE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "SBIN0000456",
+        "HDFC0001234",
+        "ICIC0000001",
+        "KKBK0000123"
+      ]
+    },
+    {
+      "id": "fin_australia_bsb",
+      "name": "Australia Bank BSB Number",
+      "category": "financial",
+      "description": "Matches Australian Bank State Branch (BSB) 6-digit numbers in XXX-XXX format.",
+      "pattern": "(?:bsb(?:\\s*number|\\s*no)?\\s*[:=\\-]?\\s*)?\\b([0-9]{3}-[0-9]{3})\\b",
+      "flags": "i",
+      "replacementTemplate": "[AUSTRALIA_BSB_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "062-000",
+        "BSB: 083-004",
+        "BSB Number: 732-000"
+      ]
+    },
+    {
+      "id": "fin_australia_account",
+      "name": "Australia Bank Account Number",
+      "category": "financial",
+      "description": "Matches Australian 6 to 9-digit bank account numbers accompanied by account keywords.",
+      "pattern": "(?:account(?:\\s*number|\\s*no|\\s*#)?|acct(?:\\s*no|\\s*#)?)\\s*[:=\\-]?\\s*\\b([0-9]{6,9})\\b",
+      "flags": "i",
+      "replacementTemplate": "[AUSTRALIA_BANK_ACCOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Account Number: 123456789",
+        "Acct No: 987654",
+        "Account: 123456"
+      ]
+    },
+    {
+      "id": "fin_canada_transit",
+      "name": "Canada Bank Transit & Financial Institution Number",
+      "category": "financial",
+      "description": "Matches Canadian 5-digit transit number and 3-digit financial institution number (XXXXX-XXX).",
+      "pattern": "(?:transit(?:\\s*number|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([0-9]{5}-[0-9]{3})\\b",
+      "flags": "i",
+      "replacementTemplate": "[CANADA_TRANSIT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "12345-001",
+        "Transit: 67890-004",
+        "00123-010"
+      ]
+    },
+    {
+      "id": "fin_germany_kontonummer",
+      "name": "Germany Bank Kontonummer",
+      "category": "financial",
+      "description": "Matches German domestic bank account numbers (Kontonummer) when marked by contextual keywords.",
+      "pattern": "(?:konto(?:nummer)?|kto(?:\\.|\\s*nr)?)\\s*[:=\\-]?\\s*\\b([0-9]{6,10})\\b",
+      "flags": "i",
+      "replacementTemplate": "[GERMANY_KONTONUMMER_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Kontonummer: 123456789",
+        "Kto. 98765432",
+        "Konto: 1234567"
+      ]
+    },
+    {
+      "id": "fin_germany_blz",
+      "name": "Germany Bankleitzahl (BLZ)",
+      "category": "financial",
+      "description": "Matches German 8-digit Bankleitzahl (BLZ) routing numbers with banking label.",
+      "pattern": "(?:blz|bankleitzahl)\\s*[:=\\-]?\\s*\\b([1-8][0-9]{7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[GERMANY_BLZ_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "BLZ: 50010517",
+        "Bankleitzahl: 10070000",
+        "BLZ: 37050198"
+      ]
+    },
+    {
+      "id": "fin_france_rib",
+      "name": "France Bank RIB / Clé RIB",
+      "category": "financial",
+      "description": "Matches French Relevé d'Identité Bancaire (RIB) components including 5-digit bank, 5-digit branch, 11-digit account, and 2-digit key.",
+      "pattern": "(?:rib\\s*[:=\\-]?\\s*)?\\b([0-9]{5}\\s*[0-9]{5}\\s*[0-9A-Z]{11}\\s*[0-9]{2})\\b",
+      "flags": "i",
+      "replacementTemplate": "[FRANCE_RIB_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "RIB: 30004 01328 00000000000 75",
+        "10278 02100 00012345601 45"
+      ]
+    },
+    {
+      "id": "fin_swift_bic",
+      "name": "SWIFT / BIC Bank Identifier Code",
+      "category": "financial",
+      "description": "Matches ISO 9362 SWIFT / BIC codes (8 or 11 characters) representing financial institutions.",
+      "pattern": "\\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9](?:[A-Z0-9]{3})?\\b",
+      "replacementTemplate": "[SWIFT_BIC_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "CHASUS33XXX",
+        "DEUTDEFF",
+        "BARCGB22",
+        "BNPAFRPPXXX"
+      ]
+    },
+    {
+      "id": "fin_iban_germany",
+      "name": "Germany IBAN (DE)",
+      "category": "financial",
+      "description": "Matches German IBAN (DE + 2 check digits + 18 digits) formatted with or without spaces.",
+      "pattern": "\\bDE[0-9]{2}(?:[ ]?[0-9]{4}){4}[ ]?[0-9]{2}\\b",
+      "replacementTemplate": "[GERMANY_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "DE89 3704 0044 0532 0130 00",
+        "DE89370400440532013000"
+      ]
+    },
+    {
+      "id": "fin_iban_uk",
+      "name": "United Kingdom IBAN (GB)",
+      "category": "financial",
+      "description": "Matches UK IBAN (GB + 2 check digits + 4 bank letters + 14 digits) with or without spaces.",
+      "pattern": "\\bGB[0-9]{2}[ ]?[A-Z]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{2}\\b",
+      "replacementTemplate": "[UK_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "GB29 NWBK 6016 1331 9268 19",
+        "GB29NWBK60161331926819"
+      ]
+    },
+    {
+      "id": "fin_iban_france",
+      "name": "France IBAN (FR)",
+      "category": "financial",
+      "description": "Matches French IBAN (FR + 2 check digits + 23 alphanumeric characters) with or without spaces.",
+      "pattern": "\\bFR[0-9]{2}(?:[ ]?[0-9A-Z]{4}){5}[ ]?[0-9A-Z]{3}\\b",
+      "replacementTemplate": "[FRANCE_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "FR14 2004 1010 0505 0001 3M02 606",
+        "FR1420041010050500013M02606"
+      ]
+    },
+    {
+      "id": "fin_iban_switzerland",
+      "name": "Switzerland IBAN (CH)",
+      "category": "financial",
+      "description": "Matches Swiss IBAN (CH + 2 check digits + 17 alphanumeric characters).",
+      "pattern": "\\bCH[0-9]{2}(?:[ ]?[0-9A-Z]{4}){4}[ ]?[0-9A-Z]\\b",
+      "replacementTemplate": "[SWISS_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "CH93 0076 2011 6238 5295 7",
+        "CH9300762011623852957"
+      ]
+    },
+    {
+      "id": "fin_iban_netherlands",
+      "name": "Netherlands IBAN (NL)",
+      "category": "financial",
+      "description": "Matches Dutch IBAN (NL + 2 check digits + 4 bank letters + 10 digits).",
+      "pattern": "\\bNL[0-9]{2}[ ]?[A-Z]{4}[ ]?[0-9]{4}[ ]?[0-9]{4}[ ]?[0-9]{2}\\b",
+      "replacementTemplate": "[DUTCH_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "NL91 ABNA 0417 1643 00",
+        "NL91ABNA0417164300"
+      ]
+    },
+    {
+      "id": "fin_iban_spain",
+      "name": "Spain IBAN (ES)",
+      "category": "financial",
+      "description": "Matches Spanish IBAN (ES + 2 check digits + 20 digits).",
+      "pattern": "\\bES[0-9]{2}(?:[ ]?[0-9]{4}){5}\\b",
+      "replacementTemplate": "[SPAIN_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "ES91 2100 0418 4502 0005 1332",
+        "ES9121000418450200051332"
+      ]
+    },
+    {
+      "id": "fin_iban_italy",
+      "name": "Italy IBAN (IT)",
+      "category": "financial",
+      "description": "Matches Italian IBAN (IT + 2 check digits + 1 check letter + 22 alphanumeric characters).",
+      "pattern": "\\bIT[0-9]{2}(?:[ ]?[0-9A-Z]{4}){5}[ ]?[0-9A-Z]{3}\\b",
+      "replacementTemplate": "[ITALY_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "IT60 X054 2811 1010 0000 0123 456",
+        "IT60X0542811101000000123456"
+      ]
+    },
+    {
+      "id": "fin_iban_poland",
+      "name": "Poland IBAN (PL)",
+      "category": "financial",
+      "description": "Matches Polish IBAN (PL + 2 check digits + 24 digits).",
+      "pattern": "\\bPL[0-9]{2}(?:[ ]?[0-9]{4}){6}\\b",
+      "replacementTemplate": "[POLAND_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "PL61 1090 1014 0000 0712 1981 2874",
+        "PL61109010140000071219812874"
+      ]
+    },
+    {
+      "id": "fin_iban_saudi",
+      "name": "Saudi Arabia IBAN (SA)",
+      "category": "financial",
+      "description": "Matches Saudi Arabian IBAN (SA + 2 check digits + 2 bank code digits + 18 account characters).",
+      "pattern": "\\bSA[0-9]{2}(?:[ ]?[0-9A-Z]{4}){5}\\b",
+      "replacementTemplate": "[SAUDI_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "SA03 8000 0000 6080 1016 7519",
+        "SA0380000000608010167519"
+      ]
+    },
+    {
+      "id": "fin_iban_uae",
+      "name": "United Arab Emirates IBAN (AE)",
+      "category": "financial",
+      "description": "Matches UAE IBAN (AE + 2 check digits + 3 bank digits + 16 account digits = 23 characters).",
+      "pattern": "\\bAE[0-9]{2}(?:[ ]?[0-9]{4}){4}[ ]?[0-9]{3}\\b",
+      "replacementTemplate": "[UAE_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "AE07 0331 2345 6789 0123 456",
+        "AE070331234567890123456"
+      ]
+    },
+    {
+      "id": "fin_iban_qatar",
+      "name": "Qatar IBAN (QA)",
+      "category": "financial",
+      "description": "Matches Qatar IBAN (QA + 2 check digits + 4 bank letters + 21 alphanumeric characters = 29 chars).",
+      "pattern": "\\bQA[0-9]{2}[ ]?[A-Z]{4}(?:[ ]?[0-9A-Z]{4}){5}[ ]?[0-9A-Z]\\b",
+      "replacementTemplate": "[QATAR_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "QA58 QNBA 0000 0000 0123 4567 8901 2",
+        "QA58QNBA000000000123456789012"
+      ]
+    },
+    {
+      "id": "fin_iban_kuwait",
+      "name": "Kuwait IBAN (KW)",
+      "category": "financial",
+      "description": "Matches Kuwait IBAN (KW + 2 check digits + 4 bank letters + 22 alphanumeric characters = 30 chars).",
+      "pattern": "\\bKW[0-9]{2}[ ]?[A-Z]{4}(?:[ ]?[0-9A-Z]{4}){5}[ ]?[0-9A-Z]{2}\\b",
+      "replacementTemplate": "[KUWAIT_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "KW81 NBOK 0000 0000 0000 1234 5678 90",
+        "KW81NBOK0000000000001234567890"
+      ]
+    },
+    {
+      "id": "fin_iban_bahrain",
+      "name": "Bahrain IBAN (BH)",
+      "category": "financial",
+      "description": "Matches Bahrain IBAN (BH + 2 check digits + 4 bank letters + 14 alphanumeric characters = 22 chars).",
+      "pattern": "\\bBH[0-9]{2}[ ]?[A-Z]{4}(?:[ ]?[0-9A-Z]{4}){3}[ ]?[0-9A-Z]{2}\\b",
+      "replacementTemplate": "[BAHRAIN_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "BH68 BBME 0000 0000 1234 56",
+        "BH68BBME00000000123456"
+      ]
+    },
+    {
+      "id": "fin_iban_oman",
+      "name": "Oman IBAN (OM)",
+      "category": "financial",
+      "description": "Matches Oman IBAN (OM + 2 check digits + 3 bank code digits + 16 account alphanumeric characters = 23 chars).",
+      "pattern": "\\bOM[0-9]{2}(?:[ ]?[0-9A-Z]{4}){4}[ ]?[0-9A-Z]{3}\\b",
+      "replacementTemplate": "[OMAN_IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "OM61 0011 2345 6789 0123 456",
+        "OM610011234567890123456"
+      ]
+    },
+    {
+      "id": "fin_iban_global_comprehensive",
+      "name": "Comprehensive International IBAN (ISO 13616)",
+      "category": "financial",
+      "description": "Matches international standard ISO 13616 IBANs starting with any 2-letter country code and 13 to 32 alphanumeric characters.",
+      "pattern": "\\b[A-Z]{2}[0-9]{2}(?:[ ]?[0-9A-Z]{4}){2,7}(?:[ ]?[0-9A-Z]{1,4})?\\b",
+      "replacementTemplate": "[IBAN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "NO93 8601 1117 947",
+        "BE68 5390 0754 7034",
+        "PT50 0002 0123 1234 5678 9015 4"
+      ]
+    },
+    {
+      "id": "pii_passport_us",
+      "name": "United States Passport Number",
+      "category": "pii",
+      "description": "Matches US Passport numbers consisting of 9 digits or next-gen passport beginning with C followed by 8 digits.",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([0-9]{9}|[C][0-9]{8})\\b",
+      "flags": "i",
+      "replacementTemplate": "[US_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport: 123456789",
+        "Passport No: C12345678",
+        "Passport Number: 987654321"
+      ]
+    },
+    {
+      "id": "pii_passport_uk",
+      "name": "United Kingdom Passport Number",
+      "category": "pii",
+      "description": "Matches UK 9-digit passport numbers accompanied by passport contextual label.",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)\\b([0-9]{9})\\b",
+      "flags": "i",
+      "replacementTemplate": "[UK_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport Number: 123456789",
+        "Passport No: 987654321",
+        "Passport: 554433221"
+      ]
+    },
+    {
+      "id": "pii_passport_india",
+      "name": "India Passport Number",
+      "category": "pii",
+      "description": "Matches Republic of India passport numbers (1 uppercase letter followed by 7 numeric digits).",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([A-PR-WYZa-pr-wyz][1-9][0-9]{6})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INDIA_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport No: J1234567",
+        "A9876543",
+        "Passport: Z1234567"
+      ]
+    },
+    {
+      "id": "pii_passport_canada",
+      "name": "Canada Passport Number",
+      "category": "pii",
+      "description": "Matches Canadian passport numbers (2 letters followed by 6 digits) with passport context.",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)\\b([A-Z]{2}[0-9]{6})\\b",
+      "flags": "i",
+      "replacementTemplate": "[CANADA_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport Number: AA123456",
+        "Passport: TC987654",
+        "Passport No: ZE654321"
+      ]
+    },
+    {
+      "id": "pii_passport_australia",
+      "name": "Australia Passport Number",
+      "category": "pii",
+      "description": "Matches Australian passport numbers (1 or 2 uppercase letters followed by 7 digits).",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([NEPFnepf][0-9]{7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[AUSTRALIA_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport: N1234567",
+        "E9876543",
+        "Passport Number: P1234567"
+      ]
+    },
+    {
+      "id": "pii_passport_germany",
+      "name": "Germany Passport (Reisepass) Number",
+      "category": "pii",
+      "description": "Matches German Reisepass alphanumeric 9-character serial number.",
+      "pattern": "(?:reisepass(?:\\s*nr|\\s*nummer)?|passport(?:\\s*number|\\s*no)?)\\s*[:=\\-]?\\s*\\b([CFGHJKLMNPRTVWXYZcfghjklmnprtvwxyz0-9]{9})\\b",
+      "flags": "i",
+      "replacementTemplate": "[GERMANY_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Reisepass Nr: C3X1P9L72",
+        "Passport Number: F8H201K4M"
+      ]
+    },
+    {
+      "id": "pii_passport_france",
+      "name": "France Passport Number",
+      "category": "pii",
+      "description": "Matches French passport numbers (2 digits + 2 letters + 5 digits).",
+      "pattern": "(?:passeport(?:\\s*numéro|\\s*no)?|passport(?:\\s*number|\\s*no)?)\\s*[:=\\-]?\\s*\\b([0-9]{2}[A-Z]{2}[0-9]{5})\\b",
+      "flags": "i",
+      "replacementTemplate": "[FRANCE_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passeport No: 12AB34567",
+        "Passport Number: 99XY12345"
+      ]
+    },
+    {
+      "id": "pii_passport_spain",
+      "name": "Spain Passport Number",
+      "category": "pii",
+      "description": "Matches Spanish passport numbers (3 letters + 6 digits or 2 letters + 7 digits) with context.",
+      "pattern": "(?:pasaporte(?:\\s*número|\\s*no)?|passport(?:\\s*number|\\s*no)?)\\s*[:=\\-]?\\s*\\b([A-Z]{2,3}[0-9]{6,7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[SPAIN_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Pasaporte: AAA123456",
+        "Passport No: AB1234567"
+      ]
+    },
+    {
+      "id": "pii_passport_italy",
+      "name": "Italy Passport Number",
+      "category": "pii",
+      "description": "Matches Italian passport numbers (2 letters + 7 digits) with contextual label.",
+      "pattern": "(?:passaporto(?:\\s*numero|\\s*no)?|passport(?:\\s*number|\\s*no)?)\\s*[:=\\-]?\\s*\\b([A-Z]{2}[0-9]{7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[ITALY_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passaporto: YA1234567",
+        "Passport Number: AB9876543"
+      ]
+    },
+    {
+      "id": "pii_passport_china",
+      "name": "China Passport Number",
+      "category": "pii",
+      "description": "Matches Chinese passport numbers (G, E, P, or S followed by 8 digits).",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([GEPSgeps][0-9]{8})\\b",
+      "flags": "i",
+      "replacementTemplate": "[CHINA_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport: E12345678",
+        "G98765432",
+        "Passport No: P55443322"
+      ]
+    },
+    {
+      "id": "pii_passport_japan",
+      "name": "Japan Passport Number",
+      "category": "pii",
+      "description": "Matches Japanese passport numbers (2 letters + 7 digits) with passport label.",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)\\b([A-Z]{2}[0-9]{7})\\b",
+      "flags": "i",
+      "replacementTemplate": "[JAPAN_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport Number: TK1234567",
+        "Passport No: MZ9876543"
+      ]
+    },
+    {
+      "id": "pii_passport_singapore",
+      "name": "Singapore Passport Number",
+      "category": "pii",
+      "description": "Matches Singapore passport numbers (Letter E or K + 7 digits + checksum letter).",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([EKek][0-9]{7}[A-Za-z])\\b",
+      "flags": "i",
+      "replacementTemplate": "[SINGAPORE_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport: E1234567A",
+        "K9876543Z",
+        "Passport No: E7654321B"
+      ]
+    },
+    {
+      "id": "pii_passport_brazil",
+      "name": "Brazil Passport Number",
+      "category": "pii",
+      "description": "Matches Brazilian passport numbers (2 letters followed by 6 digits) with context.",
+      "pattern": "(?:passaporte(?:\\s*número|\\s*no)?|passport(?:\\s*number|\\s*no)?)\\s*[:=\\-]?\\s*\\b([A-Z]{2}[0-9]{6})\\b",
+      "flags": "i",
+      "replacementTemplate": "[BRAZIL_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passaporte: BR123456",
+        "Passport Number: FL654321"
+      ]
+    },
+    {
+      "id": "pii_passport_south_africa",
+      "name": "South Africa Passport Number",
+      "category": "pii",
+      "description": "Matches South African passport numbers (Letter A, D, or M followed by 8 digits).",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)?\\b([ADM][0-9]{8})\\b",
+      "flags": "i",
+      "replacementTemplate": "[SOUTH_AFRICA_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport: A12345678",
+        "D98765432",
+        "Passport No: M55443322"
+      ]
+    },
+    {
+      "id": "pii_passport_gcc_extended",
+      "name": "GCC Regional Passport Number",
+      "category": "pii",
+      "description": "Matches GCC member state passport numbers (Saudi Arabia, UAE, Qatar, Kuwait, Bahrain, Oman) with passport label.",
+      "pattern": "(?:passport(?:\\s*number|\\s*no|\\s*#)?\\s*[:=\\-]?\\s*)\\b([A-Z0-9]{7,10})\\b",
+      "flags": "i",
+      "replacementTemplate": "[GCC_PASSPORT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Passport Number: SA12345678",
+        "Passport No: 12345678",
+        "Passport: QA9876543"
+      ]
+    },
+    {
+      "id": "sec_ssh_private_key",
+      "name": "SSH / OpenSSH / RSA Private Key Block",
+      "category": "credentials",
+      "description": "Matches PEM-encoded OpenSSH, RSA, EC, and DSA private key headers and cryptographic blocks.",
+      "pattern": "-----BEGIN (?:OPENSSH|RSA|EC|DSA) PRIVATE KEY-----[\\s\\S]+?-----END (?:OPENSSH|RSA|EC|DSA) PRIVATE KEY-----",
+      "replacementTemplate": "[SSH_PRIVATE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAA\n-----END OPENSSH PRIVATE KEY-----"
+      ]
+    },
+    {
+      "id": "sec_pgp_private_key",
+      "name": "PGP / GPG Private Key Block",
+      "category": "credentials",
+      "description": "Matches PGP ASCII-armored private key blocks.",
+      "pattern": "-----BEGIN PGP PRIVATE KEY BLOCK-----[\\s\\S]+?-----END PGP PRIVATE KEY BLOCK-----",
+      "replacementTemplate": "[PGP_PRIVATE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQOYBF2k...\n-----END PGP PRIVATE KEY BLOCK-----"
+      ]
+    },
+    {
+      "id": "sec_ssl_tls_private_key",
+      "name": "SSL / TLS & PKCS#8 Private Key Block",
+      "category": "credentials",
+      "description": "Matches PKCS#8 and encrypted SSL/TLS private key headers and cryptographic blocks.",
+      "pattern": "-----BEGIN (?:ENCRYPTED )?PRIVATE KEY-----[\\s\\S]+?-----END (?:ENCRYPTED )?PRIVATE KEY-----",
+      "replacementTemplate": "[SSL_PRIVATE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgw...\n-----END PRIVATE KEY-----"
+      ]
+    },
+    {
+      "id": "sec_aws_sts_session_token",
+      "name": "AWS STS Temporary Session Token",
+      "category": "cloud",
+      "description": "Matches AWS Security Token Service (STS) session tokens generated by AssumeRole or GetSessionToken.",
+      "pattern": "(?:aws_session_token|x-amz-security-token|SessionToken)\\s*[:=]\\s*[\\\"']?(IQoJb3JpZ2luX2Vj[a-zA-Z0-9+/=]{60,})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AWS_STS_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "aws_session_token = IQoJb3JpZ2luX2VjEEXAMPLE1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890=="
+      ]
+    },
+    {
+      "id": "sec_aws_cognito_pool",
+      "name": "AWS Cognito Identity / User Pool ID",
+      "category": "cloud",
+      "description": "Matches AWS Cognito User Pool and Identity Pool IDs.",
+      "pattern": "\\b(?:us-east-[12]|us-west-[12]|eu-west-[123]|eu-central-[12]|ap-southeast-[12]|me-central-1):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+      "replacementTemplate": "[COGNITO_POOL_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "us-east-1:a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "eu-west-1:99887766-5544-3322-1100-aabbccddeeff"
+      ]
+    },
+    {
+      "id": "sec_azure_storage_key",
+      "name": "Azure Storage Account Key & Connection String",
+      "category": "cloud",
+      "description": "Matches Azure Storage Account primary / secondary connection strings and access keys.",
+      "pattern": "DefaultEndpointsProtocol=https?;AccountName=[a-z0-9]{3,24};AccountKey=[A-Za-z0-9+/=]{86,90};EndpointSuffix=core\\.windows\\.net",
+      "replacementTemplate": "[AZURE_STORAGE_CONNECTION_STRING_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "DefaultEndpointsProtocol=https;AccountName=mystorageacct;AccountKey=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8==;EndpointSuffix=core.windows.net"
+      ]
+    },
+    {
+      "id": "sec_azure_sas_token",
+      "name": "Azure Shared Access Signature (SAS) Token",
+      "category": "cloud",
+      "description": "Matches Azure SAS token URL query parameters exposing storage, blob, and event hub access.",
+      "pattern": "\\b(?:sv=[0-9]{4}-[0-9]{2}-[0-9]{2}&(?:[a-zA-Z0-9%_-]+=[^&\\s]*&)*sig=[a-zA-Z0-9%+/=]{30,}|sig=[a-zA-Z0-9%+/=]{30,}&(?:[a-zA-Z0-9%_-]+=[^&\\s]*)*sv=[0-9]{4}-[0-9]{2}-[0-9]{2})\\b",
+      "replacementTemplate": "[AZURE_SAS_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "sv=2020-08-04&ss=b&srt=sco&sp=rwdlacx&se=2026-12-31T23:59:59Z&st=2026-01-01T00:00:00Z&spr=https&sig=mY8Q54%2FexampleSignatureValue1234567890%3D"
+      ]
+    },
+    {
+      "id": "sec_azure_client_secret",
+      "name": "Azure AD / Entra ID Client Secret",
+      "category": "cloud",
+      "description": "Matches Azure Active Directory / Entra ID app client secrets in configuration files and logs.",
+      "pattern": "(?:azure_client_secret|arm_client_secret|client_secret)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9~_\\-.]{34,44})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AZURE_CLIENT_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "azure_client_secret = \"ABC~1234567890-abcdefghijklmnopqrstuvwx\"",
+        "client_secret: \"xyz~abcdefghijklmnopqrstuvwxyz1234567890\""
+      ]
+    },
+    {
+      "id": "sec_azure_tenant_id",
+      "name": "Azure Tenant ID & Client App ID",
+      "category": "cloud",
+      "description": "Matches Azure Directory (tenant) UUID and Application (client) UUID configuration.",
+      "pattern": "(?:tenant_id|azure_tenant_id|arm_tenant_id)\\s*[:=]\\s*[\\\"']?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AZURE_TENANT_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "tenant_id = \"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d\"",
+        "azure_tenant_id: '12345678-abcd-ef01-2345-6789abcdef01'"
+      ]
+    },
+    {
+      "id": "sec_gcp_service_account_json",
+      "name": "Google Cloud Service Account JSON Key",
+      "category": "cloud",
+      "description": "Matches GCP service account private key payload with client_email and private_key_id.",
+      "pattern": "\\\"type\\\":\\s*\\\"service_account\\\"[\\s\\S]+?\\\"private_key\\\":\\s*\\\"-----BEGIN PRIVATE KEY-----",
+      "replacementTemplate": "[GCP_SERVICE_ACCOUNT_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"type\": \"service_account\",\n  \"project_id\": \"prod-app-123\",\n  \"private_key_id\": \"1234567890abcdef1234567890abcdef12345678\",\n  \"private_key\": \"-----BEGIN PRIVATE KEY-----"
+      ]
+    },
+    {
+      "id": "sec_gcp_oauth_refresh_token",
+      "name": "Google Cloud OAuth2 Refresh Token",
+      "category": "cloud",
+      "description": "Matches Google Cloud OAuth2 refresh tokens starting with 1//.",
+      "pattern": "\\b1\\/\\/[0-9a-zA-Z_-]{40,64}\\b",
+      "replacementTemplate": "[GCP_REFRESH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "1//04exampleRefreshTokenString1234567890_abcdefghijklmnopqrstuvwxyz"
+      ]
+    },
+    {
+      "id": "sec_gcp_api_key",
+      "name": "Google Cloud / Firebase API Key",
+      "category": "cloud",
+      "description": "Matches Google Cloud Platform and Firebase API keys starting with AIza.",
+      "pattern": "\\bAIza[0-9A-Za-z-_]{33,40}\\b",
+      "replacementTemplate": "[GCP_API_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "AIzaSyD-1234567890abcdefghijklmnopqrstuvw"
+      ]
+    },
+    {
+      "id": "sec_github_fine_grained_pat",
+      "name": "GitHub Fine-Grained Personal Access Token",
+      "category": "credentials",
+      "description": "Matches GitHub new fine-grained personal access tokens prefixed with github_pat_.",
+      "pattern": "\\bgithub_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{50,80}\\b",
+      "replacementTemplate": "[GITHUB_FINE_GRAINED_PAT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "github_pat_11ABCD1234567890123456_abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz123"
+      ]
+    },
+    {
+      "id": "sec_gitlab_runner_token",
+      "name": "GitLab Runner Authentication & Registration Token",
+      "category": "credentials",
+      "description": "Matches GitLab CI/CD runner tokens starting with glrt-.",
+      "pattern": "\\bglrt-[a-zA-Z0-9_\\-]{20,}\\b",
+      "replacementTemplate": "[GITLAB_RUNNER_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "glrt-t1_abc123DEF456ghi789jkl012"
+      ]
+    },
+    {
+      "id": "sec_hashicorp_vault_token",
+      "name": "HashiCorp Vault Client Token",
+      "category": "credentials",
+      "description": "Matches HashiCorp Vault root and service client tokens (hvs., hvb., s.).",
+      "pattern": "\\b(?:hvs\\.[a-zA-Z0-9_\\-]{24,}|hvb\\.[a-zA-Z0-9_\\-]{24,}|s\\.[a-zA-Z0-9_\\-]{24,})\\b",
+      "replacementTemplate": "[VAULT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "hvs.CAESIBabcdef1234567890_-xyz",
+        "s.1234567890abcdefghijklmnopqrst"
+      ]
+    },
+    {
+      "id": "sec_k8s_bearer_token",
+      "name": "Kubernetes Service Account Bearer Token",
+      "category": "credentials",
+      "description": "Matches Kubernetes service account JWT bearer tokens used for API server authentication.",
+      "pattern": "\\beyJhbGciOi[a-zA-Z0-9_\\-]+\\.eyJpc3MiOiJrdWJlcm5ldGVz[a-zA-Z0-9_\\-]+\\.[a-zA-Z0-9_\\-]+\\b",
+      "replacementTemplate": "[K8S_BEARER_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMyJ9.eyJpc3MiOiJrdWJlcm5ldGVzXC9zZXJ2aWNlYWNjb3VudCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0In0.abcdef123456"
+      ]
+    },
+    {
+      "id": "sec_k8s_kubeconfig_keys",
+      "name": "Kubernetes Kubeconfig Client Key / Certificate",
+      "category": "credentials",
+      "description": "Matches client-key-data or client-certificate-data base64 payload in kubeconfig files.",
+      "pattern": "client-(?:key|certificate)-data:\\s*([A-Za-z0-9+/=]{30,})",
+      "replacementTemplate": "[K8S_CLIENT_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBNXp6VkFiY2RlZjEyMzQ1Njc4"
+      ]
+    },
+    {
+      "id": "sec_terraform_cloud_token",
+      "name": "Terraform Cloud / Enterprise User API Token",
+      "category": "credentials",
+      "description": "Matches HashiCorp Terraform Cloud / Enterprise atlasv1 bearer tokens.",
+      "pattern": "\\b[a-zA-Z0-9]+\\.atlasv1\\.[a-zA-Z0-9]{60,}\\b",
+      "replacementTemplate": "[TERRAFORM_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "myuser.atlasv1.abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+      ]
+    },
+    {
+      "id": "sec_atlassian_api_token",
+      "name": "Atlassian / Jira / Confluence Cloud API Token",
+      "category": "credentials",
+      "description": "Matches Atlassian Cloud API tokens associated with user email credentials.",
+      "pattern": "(?:atlassian[_\\s]?token|jira[_\\s]?api[_\\s]?token|confluence[_\\s]?token)\\s*[:=]\\s*[\\\"']?([A-Za-z0-9]{24})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[ATLASSIAN_API_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "jira_api_token = \"aB3cD4eF5gH6iJ7kL8mN9oP0\"",
+        "atlassian_token: '1a2b3c4d5e6f7g8h9i0j1k2l'"
+      ]
+    },
+    {
+      "id": "sec_datadog_keys",
+      "name": "Datadog API & Application Key",
+      "category": "credentials",
+      "description": "Matches Datadog 32-character API keys and 40-character Application keys.",
+      "pattern": "(?:datadog[_-]?api[_-]?key|dd[_-]?api[_-]?key|datadog[_-]?app[_-]?key)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32,40})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[DATADOG_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "DD_API_KEY = \"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6\"",
+        "datadog_app_key: \"1234567890abcdef1234567890abcdef12345678\""
+      ]
+    },
+    {
+      "id": "sec_sentry_dsn_auth",
+      "name": "Sentry DSN Secret Key & Auth Token",
+      "category": "credentials",
+      "description": "Matches Sentry DSN URLs containing secret key authentication credentials.",
+      "pattern": "https:\\/\\/[a-f0-9]{32}:[a-f0-9]{32}@(?:o[0-9]+\\.ingest\\.)?sentry\\.io\\/[0-9]+",
+      "replacementTemplate": "[SENTRY_DSN_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "https://1234567890abcdef1234567890abcdef:abcdef1234567890abcdef1234567890@o123456.ingest.sentry.io/789101"
+      ]
+    },
+    {
+      "id": "sec_sonarqube_token",
+      "name": "SonarQube / SonarCloud Analysis Token",
+      "category": "credentials",
+      "description": "Matches SonarQube project analysis tokens (sqp_) and user tokens (sqa_).",
+      "pattern": "\\b(?:sqp|sqa)_[a-f0-9]{40}\\b",
+      "replacementTemplate": "[SONAR_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "sqp_0123456789abcdef0123456789abcdef01234567",
+        "sqa_abcdef0123456789abcdef0123456789abcdef01"
+      ]
+    },
+    {
+      "id": "sec_npm_token",
+      "name": "NPM Registry Access & Publish Token",
+      "category": "credentials",
+      "description": "Matches NPM automation and granular publishing tokens starting with npm_.",
+      "pattern": "\\bnpm_[a-zA-Z0-9]{36}\\b",
+      "replacementTemplate": "[NPM_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "npm_abcdefghijklmnopqrstuvwxyz0123456789"
+      ]
+    },
+    {
+      "id": "sec_pypi_token",
+      "name": "PyPI Package Upload API Token",
+      "category": "credentials",
+      "description": "Matches Python Package Index (PyPI) API deployment tokens starting with pypi-AgEIcHlwaS5vcm.",
+      "pattern": "\\bpypi-AgEIcHlwaS5vcm[a-zA-Z0-9_\\-]{50,150}\\b",
+      "replacementTemplate": "[PYPI_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "pypi-AgEIcHlwaS5vcmcxMjM0NWFiY2RlZgACJDEyMzQ1Njc4LTkwYWItY2RlZi0xMjM0LTU2Nzg5MGFiY2RlZgACJDEy"
+      ]
+    },
+    {
+      "id": "sec_dockerhub_pat",
+      "name": "Docker Hub Personal Access Token (PAT)",
+      "category": "credentials",
+      "description": "Matches Docker Hub Personal Access Tokens starting with dckr_pat_.",
+      "pattern": "\\bdckr_pat_[a-zA-Z0-9_\\-]{27,36}\\b",
+      "replacementTemplate": "[DOCKERHUB_PAT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "dckr_pat_abcdefghijklmnopqrstuvwxyz12"
+      ]
+    },
+    {
+      "id": "sec_postman_api_key",
+      "name": "Postman API Key",
+      "category": "credentials",
+      "description": "Matches Postman Workspace and Environment API access keys starting with PMAK-.",
+      "pattern": "\\bPMAK-[a-f0-9]{24}-[a-f0-9]{32}\\b",
+      "replacementTemplate": "[POSTMAN_API_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "PMAK-5f1234567890abcdef123456-1234567890abcdef1234567890abcdef"
+      ]
+    },
+    {
+      "id": "sec_okta_api_token",
+      "name": "Okta API Management Token (SSWS)",
+      "category": "credentials",
+      "description": "Matches Okta SSWS administrative authorization tokens.",
+      "pattern": "\\bSSWS\\s+([0-9a-zA-Z_-]{42})\\b",
+      "replacementTemplate": "[OKTA_API_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "SSWS 00abcdef1234567890ABCDEF1234567890abcdef12"
+      ]
+    },
+    {
+      "id": "sec_discord_bot_token",
+      "name": "Discord Bot Token",
+      "category": "credentials",
+      "description": "Matches Discord developer bot authentication tokens.",
+      "pattern": "\\b(?:[MN][A-Za-z\\d]{23,25})\\.(?:[A-Za-z\\d_-]{6})\\.(?:[A-Za-z\\d_-]{27,38})\\b",
+      "replacementTemplate": "[DISCORD_BOT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical"
+    },
+    {
+      "id": "sec_telegram_bot_token",
+      "name": "Telegram Bot API Token",
+      "category": "credentials",
+      "description": "Matches Telegram Bot API HTTP tokens composed of bot ID and 35-character secret string.",
+      "pattern": "\\b[0-9]{9,10}:[a-zA-Z0-9_-]{35}\\b",
+      "replacementTemplate": "[TELEGRAM_BOT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "123456789:ABCdefGHIjklMNOpqrsTUVwxyz123456789"
+      ]
+    },
+    {
+      "id": "sec_grafana_service_token",
+      "name": "Grafana Service Account Token",
+      "category": "credentials",
+      "description": "Matches Grafana service account API tokens prefixed with glsa_.",
+      "pattern": "\\bglsa_[A-Za-z0-9]{32}_[A-Fa-f0-9]{8}\\b",
+      "replacementTemplate": "[GRAFANA_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "glsa_abcdefghijklmnopqrstuvwxyz012345_12345678"
+      ]
+    },
+    {
+      "id": "sec_huggingface_token",
+      "name": "Hugging Face User Access Token",
+      "category": "credentials",
+      "description": "Matches Hugging Face platform user access and inference tokens prefixed with hf_.",
+      "pattern": "\\bhf_[a-zA-Z0-9]{34,}\\b",
+      "replacementTemplate": "[HUGGINGFACE_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "hf_abcdefghijklmnopqrstuvwxyz0123456789"
+      ]
+    },
+    {
+      "id": "sec_artifactory_api_key",
+      "name": "JFrog Artifactory API Key & Access Token",
+      "category": "credentials",
+      "description": "Matches JFrog Artifactory 64 or 73-character API keys and bearer tokens.",
+      "pattern": "(?:artifactory[_-]?api[_-]?key|jfrog[_-]?token)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9]{64,73})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[ARTIFACTORY_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "artifactory_api_key = \"AKCP8abcdef1234567890abcdef1234567890abcdef1234567890abcdef12345678\""
+      ]
+    },
+    {
+      "id": "logs_nginx_client_ip_user",
+      "name": "Nginx Access Log Client IP & Remote User",
+      "category": "network",
+      "description": "Matches the client IP address and authenticated remote user line prefix in standard Nginx combined access log format.",
+      "pattern": "^([0-9]{1,3}(?:\\.[0-9]{1,3}){3}|[a-f0-9:]+)\\s+-\\s+([a-zA-Z0-9_.-]+)\\s+\\[",
+      "flags": "m",
+      "replacementTemplate": "[CLIENT_IP_{INDEX}] - [REMOTE_USER_{INDEX}] [",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "192.168.1.105 - admin [",
+        "10.0.4.12 - jdoe ["
+      ]
+    },
+    {
+      "id": "logs_nginx_proxy_auth_header",
+      "name": "Nginx Upstream Proxy Authorization Header",
+      "category": "credentials",
+      "description": "Matches proxy_set_header Authorization directives leaking Basic or Bearer authentication in Nginx configs and logs.",
+      "pattern": "proxy_set_header\\s+Authorization\\s+[\\\"']?(?:Basic|Bearer)\\s+([A-Za-z0-9+/=._-]+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[NGINX_PROXY_AUTH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "proxy_set_header Authorization \"Bearer eyJhbGciOi...\"",
+        "proxy_set_header Authorization \"Basic dXNlcjpwYXNz\""
+      ]
+    },
+    {
+      "id": "logs_nginx_ssl_key_file_path",
+      "name": "Nginx SSL Certificate Key File Path",
+      "category": "credentials",
+      "description": "Matches ssl_certificate_key paths and private key directives in Nginx configuration and error logs.",
+      "pattern": "ssl_certificate_key\\s+[\\\"']?(/[a-zA-Z0-9_./-]+\\.(?:key|pem))[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[SSL_KEY_PATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "ssl_certificate_key /etc/ssl/certs/internal_prod.key;",
+        "ssl_certificate_key '/etc/nginx/ssl/server.pem';"
+      ]
+    },
+    {
+      "id": "logs_nginx_cookie_header_dump",
+      "name": "Nginx Debug Log Raw Cookie Header Dump",
+      "category": "credentials",
+      "description": "Matches raw HTTP Cookie headers with session IDs, tokens, and cookies printed in Nginx debug log mode.",
+      "pattern": "(?:http_cookie|Cookie):\\s*[\\\"']?([^\\\"'\\r\\n]*(?:sessionid|auth|token|jwt|connect\\.sid)=[^\\\"'\\r\\n]+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[REDACTED_COOKIE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Cookie: sessionid=9876543210abcdef; auth_token=secretxyz",
+        "http_cookie: \"connect.sid=s%3A123456.abcdef\""
+      ]
+    },
+    {
+      "id": "logs_nginx_url_secret_query_params",
+      "name": "Nginx Access Log Sensitive URL Query Parameter",
+      "category": "credentials",
+      "description": "Matches sensitive authentication parameters (token, secret, api_key, password) passed in request URI query strings in access logs.",
+      "pattern": "(?:[?&])(?:token|access_token|api_key|secret|password|auth_token)=([a-zA-Z0-9%_-]{8,})",
+      "flags": "i",
+      "replacementTemplate": "[REDACTED_URL_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "?access_token=secret_1234567890abcdef",
+        "&password=SuperSecretPassword123",
+        "?api_key=ak_live_abcdef123456"
+      ]
+    },
+    {
+      "id": "logs_nginx_upstream_500_response_dump",
+      "name": "Nginx Upstream Error Response Body Leak",
+      "category": "devops",
+      "description": "Matches upstream server 500 error body fragments leaking internal backend paths and database exception messages.",
+      "pattern": "(?:upstream sent too big header|recv\\(\\) failed).*?while reading response header from upstream",
+      "flags": "i",
+      "replacementTemplate": "[NGINX_UPSTREAM_ERROR_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "recv() failed (104: Connection reset by peer) while reading response header from upstream",
+        "upstream sent too big header while reading response header from upstream"
+      ]
+    },
+    {
+      "id": "logs_nginx_client_ssl_dn",
+      "name": "Nginx Client SSL Certificate Subject DN",
+      "category": "network",
+      "description": "Matches $ssl_client_s_dn and $ssl_client_i_dn containing subject distinguished names, emails, and corporate CNs.",
+      "pattern": "(?:ssl_client_s_dn|ssl_client_dn)\\s*[:=]\\s*[\\\"']?([A-Za-z0-9_,./=\\s-]*CN=[A-Za-z0-9_.-]+[^\\\"'\\r\\n]*)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[SSL_CLIENT_DN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "ssl_client_s_dn = \"/C=US/ST=CA/O=Enterprise/CN=john.doe@corp.com\"",
+        "ssl_client_dn: \"CN=internal-client.corp.com,O=Internal\""
+      ]
+    },
+    {
+      "id": "logs_nginx_fastcgi_param_password",
+      "name": "Nginx FastCGI Param Password Directive",
+      "category": "credentials",
+      "description": "Matches FastCGI and PHP-FPM parameter directives assigning passwords and secret tokens in Nginx configs.",
+      "pattern": "fastcgi_param\\s+[A-Z0-9_]*(?:PASS|PASSWORD|SECRET|TOKEN|KEY)\\s+[\\\"']?([^;\\\"'\\s]+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[REDACTED_FASTCGI_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "fastcgi_param DB_PASSWORD \"SuperSecretPass123!\";",
+        "fastcgi_param APP_SECRET 'my-very-secret-token';"
+      ]
+    },
+    {
+      "id": "logs_nginx_geoip_country_ip",
+      "name": "Nginx X-Real-IP / X-Forwarded-For Client Header",
+      "category": "network",
+      "description": "Matches forwarded client IP addresses in proxy headers within Nginx access logs.",
+      "pattern": "(?:X-Real-IP|X-Forwarded-For):\\s*([0-9]{1,3}(?:\\.[0-9]{1,3}){3})",
+      "flags": "i",
+      "replacementTemplate": "[CLIENT_ORIGIN_IP_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "X-Real-IP: 203.0.113.195",
+        "X-Forwarded-For: 198.51.100.44"
+      ]
+    },
+    {
+      "id": "logs_nginx_basic_auth_htpasswd_path",
+      "name": "Nginx auth_basic_user_file Path Reference",
+      "category": "credentials",
+      "description": "Matches references to .htpasswd password files in Nginx server configurations.",
+      "pattern": "auth_basic_user_file\\s+[\\\"']?(/[a-zA-Z0-9_./-]+\\.(?:htpasswd|passwd))[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[HTPASSWD_PATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "auth_basic_user_file /etc/nginx/.htpasswd;",
+        "auth_basic_user_file '/etc/nginx/conf.d/admin.htpasswd';"
+      ]
+    },
+    {
+      "id": "logs_docker_config_auth_base64",
+      "name": "Docker Daemon config.json Registry Auth Secret",
+      "category": "credentials",
+      "description": "Matches base64-encoded docker registry username:password credentials inside ~/.docker/config.json.",
+      "pattern": "\\\"auth\\\"\\s*:\\s*\\\"([A-Za-z0-9+/=]{20,})\\\"",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_REGISTRY_AUTH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"auth\": \"dXNlcm5hbWU6cGFzc3dvcmQxMjM=\"",
+        "\"auth\": \"ZG9ja2VyX3VzZXI6c2VjcmV0dG9rZW4=\""
+      ]
+    },
+    {
+      "id": "logs_docker_inspect_env_password",
+      "name": "Docker Container Inspect Env Password Leak",
+      "category": "credentials",
+      "description": "Matches environment variables containing passwords and secrets output during docker inspect.",
+      "pattern": "\\\"([A-Z0-9_]*(?:PASSWORD|SECRET|TOKEN|KEY|PASS|AUTH)=([^\\r\\n\\\",]+))\\\"",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_ENV_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"MYSQL_ROOT_PASSWORD=P@ssw0rd2026\"",
+        "\"JWT_SECRET=super_secret_jwt_key\"",
+        "\"API_KEY=live_token_123\""
+      ]
+    },
+    {
+      "id": "logs_docker_buildkit_secret_mount",
+      "name": "Docker BuildKit Secret Mount Exposure",
+      "category": "credentials",
+      "description": "Matches BuildKit secret mount invocations in Dockerfile and docker build logs.",
+      "pattern": "--mount=type=secret,id=([a-zA-Z0-9_\\-]+)(?:,src=([^\\s,]+))?",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_SECRET_MOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "--mount=type=secret,id=my_api_key",
+        "--mount=type=secret,id=aws_creds,src=/root/.aws/credentials"
+      ]
+    },
+    {
+      "id": "logs_docker_compose_env_file",
+      "name": "Docker Compose Environment Variable Credential",
+      "category": "credentials",
+      "description": "Matches credential environment assignments in docker-compose.yml and .env files.",
+      "pattern": "(?:POSTGRES_PASSWORD|MYSQL_ROOT_PASSWORD|MONGO_INITDB_ROOT_PASSWORD|REDIS_PASSWORD|SECRET_KEY_BASE)\\s*[:=]\\s*([^\\s\\r\\n'\\\"]+)",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_COMPOSE_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "POSTGRES_PASSWORD=myPostgresSecret99!",
+        "MYSQL_ROOT_PASSWORD: RootPassWord123",
+        "REDIS_PASSWORD=redis_auth_token_99"
+      ]
+    },
+    {
+      "id": "logs_docker_daemon_login_token",
+      "name": "Docker Daemon Login Password in Log",
+      "category": "credentials",
+      "description": "Matches docker login commands executed with password flags in daemon logs or bash history.",
+      "pattern": "docker\\s+login\\s+(?:-[a-z\\s]+)*(?:--password|-p)\\s+[\\\"']?([^\\s\\\"']+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_LOGIN_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "docker login -u user -p SecretPassword123",
+        "docker login --password 'SuperDockerToken123' registry.gitlab.com"
+      ]
+    },
+    {
+      "id": "logs_docker_volume_sensitive_host_path",
+      "name": "Docker Volume Mount Sensitive Host Directory",
+      "category": "credentials",
+      "description": "Matches volume mounts exposing sensitive host files like ~/.ssh, ~/.aws, /etc/shadow, or /var/run/docker.sock.",
+      "pattern": "-v\\s+(?:~|/[a-zA-Z0-9_.-]+)*(?:/\\.ssh|/\\.aws|/etc/shadow|/etc/passwd|/var/run/docker\\.sock):[^\\s]+",
+      "flags": "i",
+      "replacementTemplate": "[SENSITIVE_HOST_MOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "-v /root/.ssh:/root/.ssh:ro",
+        "-v ~/.aws:/home/node/.aws",
+        "-v /var/run/docker.sock:/var/run/docker.sock"
+      ]
+    },
+    {
+      "id": "logs_docker_swarm_secret_spec",
+      "name": "Docker Swarm Service Secret Identifier",
+      "category": "credentials",
+      "description": "Matches Swarm secret IDs and secret target definitions in docker service inspect.",
+      "pattern": "\\\"Secret(?:ID|Name)\\\"\\s*:\\s*\\\"([a-zA-Z0-9_\\-]{20,})\\\"",
+      "flags": "i",
+      "replacementTemplate": "[SWARM_SECRET_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "\"SecretID\": \"7kxabc123def456ghi789jkl\"",
+        "\"SecretName\": \"prod_db_credential_v1\""
+      ]
+    },
+    {
+      "id": "logs_docker_container_long_hash",
+      "name": "Docker 64-Hex Container & Image Digest Hash",
+      "category": "network",
+      "description": "Matches full 64-character hexadecimal container IDs and image digests in Docker log outputs.",
+      "pattern": "\\b(?:sha256:)?([a-f0-9]{64})\\b",
+      "replacementTemplate": "[DOCKER_HASH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "sha256:4f53cda18c2b53d4f8263f35fe8144b6c3f58a8f15b3c58b420239634e9e0839",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      ]
+    },
+    {
+      "id": "logs_docker_registry_bearer_challenge",
+      "name": "Docker Registry Www-Authenticate Bearer Challenge",
+      "category": "credentials",
+      "description": "Matches Docker distribution registry authentication challenge realms and service secrets.",
+      "pattern": "Www-Authenticate:\\s*Bearer\\s+realm=[\\\"']([^\\\"']+)[\\\"'],service=[\\\"']([^\\\"']+)[\\\"']",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_REGISTRY_CHALLENGE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "Www-Authenticate: Bearer realm=\"https://auth.docker.io/token\",service=\"registry.docker.io\""
+      ]
+    },
+    {
+      "id": "logs_docker_exec_command_creds",
+      "name": "Docker Exec Command Inlined Password",
+      "category": "credentials",
+      "description": "Matches docker exec invocations passing inline passwords to database clients.",
+      "pattern": "docker\\s+exec\\s+(?:-[a-z\\s]+)*[a-zA-Z0-9_\\-]+\\s+(?:mysql|psql|redis-cli)\\s+.*?(?:-p|--password|--auth=)\\s*([^\\s]+)",
+      "flags": "i",
+      "replacementTemplate": "[DOCKER_EXEC_PASSWORD_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "docker exec -it db_container mysql -u root -pSuperSecret123"
+      ]
+    },
+    {
+      "id": "logs_jenkins_with_credentials_leak",
+      "name": "Jenkins Pipeline withCredentials Secret Dump",
+      "category": "credentials",
+      "description": "Matches Jenkins pipeline withCredentials blocks that echo or output masked / partially exposed secrets.",
+      "pattern": "\\[Pipeline\\]\\s+withCredentials\\s*\\(\\[string\\(credentialsId:\\s*['\\\"]([^'\\\"]+)['\\\"]",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_CRED_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "[Pipeline] withCredentials([string(credentialsId: 'prod-api-secret', variable: 'SECRET')])"
+      ]
+    },
+    {
+      "id": "logs_jenkins_crumb_token",
+      "name": "Jenkins Crumb CSRF Protection Token",
+      "category": "credentials",
+      "description": "Matches Jenkins-Crumb CSRF protection headers and tokens in curl commands and build logs.",
+      "pattern": "(?:Jenkins-Crumb|crumbRequestField)\\s*[:=]\\s*[\\\"']?([a-f0-9]{64})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_CRUMB_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Jenkins-Crumb: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "crumbRequestField = \"a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90\""
+      ]
+    },
+    {
+      "id": "logs_jenkins_user_api_token",
+      "name": "Jenkins User 32-Hex API Token",
+      "category": "credentials",
+      "description": "Matches Jenkins user API tokens passed via HTTP basic authentication in build scripts.",
+      "pattern": "(?:jenkins_api_token|JENKINS_TOKEN)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_API_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "JENKINS_TOKEN=11223344556677889900aabbccddeeff",
+        "jenkins_api_token = \"0123456789abcdef0123456789abcdef\""
+      ]
+    },
+    {
+      "id": "logs_jenkins_ssh_credential_leak",
+      "name": "Jenkins SSH Credential Private Key Dump",
+      "category": "credentials",
+      "description": "Matches SSH private keys injected into Jenkins build logs by SSH credentials plugin.",
+      "pattern": "Injecting SSH key for credential ID:\\s*['\\\"]?([a-zA-Z0-9_\\-]+)['\\\"]?",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_SSH_CRED_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Injecting SSH key for credential ID: 'deploy-key-github-prod'"
+      ]
+    },
+    {
+      "id": "logs_jenkins_git_credential_url",
+      "name": "Jenkins Git Plugin Remote URL with Credentials",
+      "category": "credentials",
+      "description": "Matches Git clone URLs printed in Jenkins console logs containing embedded credentials or tokens.",
+      "pattern": "(?:Fetching upstream changes from|Cloning the remote Git repository)\\s+(https?:\\/\\/[^:]+:[^@]+@[^\\s]+)",
+      "flags": "i",
+      "replacementTemplate": "[GIT_URL_WITH_CRED_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Cloning the remote Git repository https://gitlab-ci-token:glpat-1234567890@gitlab.com/org/repo.git"
+      ]
+    },
+    {
+      "id": "logs_jenkins_workspace_internal_path",
+      "name": "Jenkins Pipeline Internal Workspace Path",
+      "category": "devops",
+      "description": "Matches internal Jenkins master/slave filesystem paths showing user homes and job names.",
+      "pattern": "(?:\\/var\\/jenkins_home\\/workspace|\\/home\\/jenkins\\/workspace|\\/opt\\/jenkins\\/workspace)\\/[a-zA-Z0-9_\\-./]+",
+      "replacementTemplate": "[JENKINS_WORKSPACE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "/var/jenkins_home/workspace/deploy-prod-microservice/target",
+        "/home/jenkins/workspace/backend-api-build"
+      ]
+    },
+    {
+      "id": "logs_jenkins_agent_slave_secret",
+      "name": "Jenkins Inbound Agent / Slave Secret Key",
+      "category": "credentials",
+      "description": "Matches the 64-character secret key passed when connecting an inbound Jenkins agent via JNLP.",
+      "pattern": "-secret\\s+([a-f0-9]{64})\\b",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_SLAVE_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "-secret 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ]
+    },
+    {
+      "id": "logs_jenkins_blue_ocean_oauth",
+      "name": "Jenkins Blue Ocean OAuth / Access Token",
+      "category": "credentials",
+      "description": "Matches Blue Ocean authorization tokens in REST API console requests.",
+      "pattern": "(?:blueocean[_-]?token|jenkins[_-]?bearer)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-.]{32,64})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_BLUEOCEAN_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "blueocean_token = \"abc123def456ghi789jkl012mno345pqr678stu\""
+      ]
+    },
+    {
+      "id": "logs_jenkins_credentials_xml_dump",
+      "name": "Jenkins credentials.xml Encrypted Secret String",
+      "category": "credentials",
+      "description": "Matches encrypted string blocks within Jenkins credentials.xml configuration backups.",
+      "pattern": "<(?:secret|password)>\\s*\\{[a-zA-Z0-9=+/]{30,}\\}\\s*<\\/(?:secret|password)>",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_ENCRYPTED_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "<secret>{AQAAABAAAAAQ1234567890abcdefghijklmnopqrstuvwxyz==}</secret>",
+        "<password>{AQAAABAAAAAw1234567890abcdef1234567890abcdef==}</password>"
+      ]
+    },
+    {
+      "id": "logs_jenkins_vault_plugin_secret",
+      "name": "Jenkins HashiCorp Vault Plugin Secret Path",
+      "category": "credentials",
+      "description": "Matches HashiCorp Vault key references in Jenkins pipeline steps.",
+      "pattern": "vault\\s*\\(\\s*vaultUrl:\\s*['\\\"][^'\\\"]+['\\\"],\\s*path:\\s*['\\\"]([^'\\\"]+)['\\\"]",
+      "flags": "i",
+      "replacementTemplate": "[JENKINS_VAULT_PATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "vault(vaultUrl: 'https://vault.corp:8200', path: 'secret/data/production/db')"
+      ]
+    },
+    {
+      "id": "env_k8s_secret_base64_data",
+      "name": "Kubernetes Secret Manifest data Base64 Payload",
+      "category": "credentials",
+      "description": "Matches data: field base64 encoded strings in Kubernetes Secret manifests.",
+      "pattern": "^\\s*([a-zA-Z0-9_.-]+):\\s*([A-Za-z0-9+/=]{24,})$",
+      "flags": "m",
+      "replacementTemplate": "[K8S_SECRET_BASE64_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "password: dGVzdFBhc3N3b3JkMTIzIQ==",
+        "api_token: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNk=="
+      ]
+    },
+    {
+      "id": "env_k8s_etcd_tls_certs",
+      "name": "Kubernetes Etcd TLS Key & Peer Certificate Path",
+      "category": "credentials",
+      "description": "Matches etcd cluster peer and server TLS private key parameters.",
+      "pattern": "--(?:peer-)?key-file=(/etc/kubernetes/pki/[^\\s]+\\.key)",
+      "flags": "i",
+      "replacementTemplate": "[ETCD_TLS_KEY_PATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "--key-file=/etc/kubernetes/pki/etcd/server.key",
+        "--peer-key-file=/etc/kubernetes/pki/etcd/peer.key"
+      ]
+    },
+    {
+      "id": "env_k8s_audit_bearer_token",
+      "name": "Kubernetes API Server Audit Log Authorization Bearer",
+      "category": "credentials",
+      "description": "Matches authorization bearer tokens logged in Kubernetes audit logs.",
+      "pattern": "\\\"authorization\\\"\\s*:\\s*\\[\\s*\\\"Bearer\\s+([a-zA-Z0-9_\\-.]+)\\\"\\s*\\]",
+      "flags": "i",
+      "replacementTemplate": "[K8S_AUDIT_BEARER_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"authorization\": [ \"Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.abcdef\" ]"
+      ]
+    },
+    {
+      "id": "env_k8s_helm_release_values",
+      "name": "Helm Values Secret Credential Override",
+      "category": "credentials",
+      "description": "Matches Helm CLI --set flags passing database passwords or secret keys.",
+      "pattern": "--set\\s+(?:[a-zA-Z0-9_.]*(?:password|secret|key|token|auth))=([^\\s,]+)",
+      "flags": "i",
+      "replacementTemplate": "[HELM_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "--set postgresql.auth.password=superSecret123",
+        "--set global.redis.password=redisSecret"
+      ]
+    },
+    {
+      "id": "env_k8s_env_from_secret",
+      "name": "Kubernetes envFrom secretRef Name",
+      "category": "credentials",
+      "description": "Matches secretRef specifications injecting sensitive Kubernetes secrets into container environments.",
+      "pattern": "secretRef:\\s*\\n\\s*name:\\s*([a-zA-Z0-9_\\-]+)",
+      "flags": "m",
+      "replacementTemplate": "[K8S_SECRET_REF_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "secretRef:\n      name: app-database-credentials"
+      ]
+    },
+    {
+      "id": "env_linux_auth_log_sudo_fail",
+      "name": "Linux /var/log/auth.log Sudo Authentication Log",
+      "category": "credentials",
+      "description": "Matches PAM authentication failure and sudo execution attempts in Linux auth.log.",
+      "pattern": "(?:pam_unix\\(sudo:auth\\):\\s*authentication failure;.*?(?:user=([a-zA-Z0-9_.-]+))|sudo:\\s+([a-zA-Z0-9_.-]+)\\s*:\\s*command not allowed)",
+      "flags": "i",
+      "replacementTemplate": "[LINUX_AUTH_FAIL_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "pam_unix(sudo:auth): authentication failure; logname= uid=1000 euid=0 tty=/dev/pts/1 ruser=john rhost= user=john",
+        "sudo: anand : command not allowed"
+      ]
+    },
+    {
+      "id": "env_linux_shadow_password_hash",
+      "name": "Linux /etc/shadow Password Hash (SHA-512 / Yescrypt)",
+      "category": "credentials",
+      "description": "Matches Linux password hashes ($6$, $y$, $1$) from /etc/shadow or user backups.",
+      "pattern": "\\$(?:6|y|1)\\$(?:[a-zA-Z0-9./=]+\\$){1,2}[a-zA-Z0-9./]{22,86}\\b",
+      "replacementTemplate": "[LINUX_SHADOW_HASH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "$6$rounds=5000$saltstring$abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+        "$y$j9T$salt$abcdefghijklmnopqrstuvwxyz1234567890"
+      ]
+    },
+    {
+      "id": "env_linux_bash_history_credentials",
+      "name": "Shell Command Line Credentials (curl / mysql / sshpass)",
+      "category": "credentials",
+      "description": "Matches command line invocations containing inline passwords (-p, -u, --password).",
+      "pattern": "(?:mysql|mysqldump)\\s+.*?-[a-zA-Z0-9]*p([^\\s\\\"']+)",
+      "flags": "i",
+      "replacementTemplate": "[REDACTED_CLI_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "mysql -u root -pSuperSecret123",
+        "mysqldump -u admin -pMyDatabasePass prod_db"
+      ]
+    },
+    {
+      "id": "env_linux_proc_cmdline_pass",
+      "name": "Linux /proc/cmdline Boot Kernel Credentials",
+      "category": "credentials",
+      "description": "Matches kernel boot arguments containing disk encryption passwords or root credentials.",
+      "pattern": "(?:luks\\.key|cryptkey|password|rootpw)=([^\\s]+)",
+      "flags": "i",
+      "replacementTemplate": "[KERNEL_CMDLINE_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "luks.key=/root/keyfile",
+        "password=boot_password_123"
+      ]
+    },
+    {
+      "id": "env_linux_journalctl_ssh_auth",
+      "name": "Linux SSH Failed & Accepted Password Log",
+      "category": "credentials",
+      "description": "Matches sshd accepted or failed password attempts leaking usernames and origin IPs in journalctl logs.",
+      "pattern": "sshd\\[[0-9]+\\]:\\s+(?:Failed|Accepted)\\s+password\\s+for\\s+(?:invalid\\s+user\\s+)?([a-zA-Z0-9_.-]+)\\s+from\\s+([0-9]{1,3}(?:\\.[0-9]{1,3}){3})",
+      "flags": "i",
+      "replacementTemplate": "[SSHD_AUTH_LOG_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "sshd[1234]: Failed password for root from 192.168.1.50 port 44322 ssh2",
+        "sshd[5678]: Accepted password for deploy from 10.0.0.1 port 52110 ssh2"
+      ]
+    },
+    {
+      "id": "env_db_mysql_query_password",
+      "name": "MySQL / MariaDB Log IDENTIFIED BY Password",
+      "category": "credentials",
+      "description": "Matches user creation and grant queries with IDENTIFIED BY password in general logs.",
+      "pattern": "(?:IDENTIFIED\\s+BY\\s+(?:PASSWORD\\s+)?['\\\"]([^'\\\"]+)['\\\"]|SET\\s+PASSWORD\\s+FOR\\s+[^=]+=\\s*PASSWORD\\(['\\\"]([^'\\\"]+)['\\\"]\\))",
+      "flags": "i",
+      "replacementTemplate": "[DB_QUERY_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "CREATE USER 'app'@'%' IDENTIFIED BY 'SecretAppPass123!';"
+      ]
+    },
+    {
+      "id": "env_db_postgres_role_password",
+      "name": "PostgreSQL Log CREATE/ALTER ROLE Password",
+      "category": "credentials",
+      "description": "Matches Postgres SQL statements creating or altering roles with cleartext or MD5/SCRAM passwords.",
+      "pattern": "(?:CREATE|ALTER)\\s+ROLE\\s+([^\\s]+)\\s+WITH\\s+(?:.*?\\s+)?PASSWORD\\s+['\\\"]([^'\\\"]+)['\\\"]",
+      "flags": "i",
+      "replacementTemplate": "[PG_ROLE_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "ALTER ROLE postgres WITH PASSWORD 'mySuperPostgresPassword';"
+      ]
+    },
+    {
+      "id": "env_db_mongodb_log_uri",
+      "name": "MongoDB Connection URI with Credentials in Log",
+      "category": "credentials",
+      "description": "Matches mongodb:// and mongodb+srv:// connection strings containing embedded passwords.",
+      "pattern": "mongodb(?:\\+srv)?:\\/\\/[a-zA-Z0-9_\\-\\.%]+:([^@\\s]+)@[a-zA-Z0-9_\\-\\.]+",
+      "replacementTemplate": "[MONGO_AUTH_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "mongodb://admin:p@ssw0rd123@cluster0.mongodb.net/prod",
+        "mongodb+srv://app_user:secretMongoToken@db.internal:27017"
+      ]
+    },
+    {
+      "id": "env_db_redis_auth_command",
+      "name": "Redis Server Log AUTH Command Password",
+      "category": "credentials",
+      "description": "Matches redis AUTH commands and CONFIG SET requirepass lines leaking passwords in Redis logs.",
+      "pattern": "\\b(?:AUTH\\s+[\\\"']?([^\\s\\\"'\\r\\n]+)[\\\"']?|CONFIG\\s+SET\\s+requirepass\\s+[\\\"']?([^\\s\\\"'\\r\\n]+)[\\\"']?)",
+      "flags": "i",
+      "replacementTemplate": "[REDIS_AUTH_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "AUTH MySecretRedisPassword123",
+        "CONFIG SET requirepass \"redisStrongPass99\""
+      ]
+    },
+    {
+      "id": "env_db_elasticsearch_superuser",
+      "name": "Elasticsearch Superuser Elastic Password in Log",
+      "category": "credentials",
+      "description": "Matches auto-generated elastic superuser passwords displayed in Elasticsearch startup logs.",
+      "pattern": "Password for the elastic user is:\\s*([a-zA-Z0-9_\\-+=]{20,})",
+      "flags": "i",
+      "replacementTemplate": "[ELASTIC_SUPERUSER_PASS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Password for the elastic user is: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+      ]
+    },
+    {
+      "id": "env_db_oracle_tns_password",
+      "name": "Oracle Database TNS / Connect String Password",
+      "category": "credentials",
+      "description": "Matches Oracle sqlplus connect strings in the form user/password@host:port/service.",
+      "pattern": "(?:sqlplus|CONNECT)\\s+([a-zA-Z0-9_]+)\\/([^\\s@]+)@[a-zA-Z0-9_.-]+",
+      "flags": "i",
+      "replacementTemplate": "[ORACLE_DB_CONNECT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "sqlplus scott/tiger@oracle-prod.internal:1521/ORCL",
+        "CONNECT app_owner/MySecretOraclePass123@db_tns"
+      ]
+    },
+    {
+      "id": "env_cicd_github_actions_tokens",
+      "name": "GitHub Actions Runner Runtime & ID Tokens",
+      "category": "credentials",
+      "description": "Matches GitHub Actions runtime authentication and OIDC tokens in runner diagnostics.",
+      "pattern": "(?:ACTIONS_RUNTIME_TOKEN|ACTIONS_ID_TOKEN_REQUEST_TOKEN)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-.]{30,})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GHA_RUNTIME_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "ACTIONS_RUNTIME_TOKEN = \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMyJ9.abcdef...\""
+      ]
+    },
+    {
+      "id": "env_cicd_gitlab_job_token",
+      "name": "GitLab CI CI_JOB_TOKEN & Registry Password",
+      "category": "credentials",
+      "description": "Matches GitLab CI job tokens and container registry passwords in runner output.",
+      "pattern": "(?:CI_JOB_TOKEN|CI_REGISTRY_PASSWORD)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-]{20,})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GITLAB_JOB_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "CI_JOB_TOKEN = \"glcjt-abcdef1234567890abcdef1234\""
+      ]
+    },
+    {
+      "id": "env_cicd_circleci_token",
+      "name": "CircleCI API & Context Token",
+      "category": "credentials",
+      "description": "Matches CircleCI personal API tokens and project context tokens.",
+      "pattern": "(?:circle-token|CIRCLE_TOKEN)\\s*[:=]\\s*[\\\"']?([a-f0-9]{40})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[CIRCLECI_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "circle-token: \"0123456789abcdef0123456789abcdef01234567\""
+      ]
+    },
+    {
+      "id": "env_cicd_bitbucket_pipelines_key",
+      "name": "Bitbucket Pipelines App Password & OAuth Key",
+      "category": "credentials",
+      "description": "Matches Bitbucket App passwords and OAuth consumer secrets in CI pipeline logs.",
+      "pattern": "(?:BITBUCKET_APP_PASSWORD|BITBUCKET_STEP_OAUTH_KEY)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-]{20,})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[BITBUCKET_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "BITBUCKET_APP_PASSWORD = \"my-bitbucket-app-password-1234\""
+      ]
+    },
+    {
+      "id": "env_cicd_argocd_admin_secret",
+      "name": "ArgoCD Initial Admin Secret & Auth Token",
+      "category": "credentials",
+      "description": "Matches ArgoCD initial admin secret password output in installation logs.",
+      "pattern": "(?:argocd-initial-admin-secret|argocd_auth_token)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-.$]{32,60})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[ARGOCD_ADMIN_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "argocd-initial-admin-secret: \"$2a$10$abcdefghijklmnopqrstuvwxyz1234567890abcdef12\"",
+        "argocd_auth_token = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\""
+      ]
+    },
+    {
+      "id": "env_cloudwatch_sts_credentials",
+      "name": "AWS CloudWatch STS Temporary Credentials Dump",
+      "category": "cloud",
+      "description": "Matches AWS CloudWatch log events recording AssumeRole temporary credential responses.",
+      "pattern": "\\\"AccessKeyId\\\"\\s*:\\s*\\\"(ASIA[0-9A-Z]{16})\\\"",
+      "flags": "i",
+      "replacementTemplate": "[AWS_ASIA_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"AccessKeyId\": \"ASIAIOSFODNN7EXAMPLE\""
+      ]
+    },
+    {
+      "id": "env_gcp_cloud_logging_oauth",
+      "name": "Google Cloud Logging OAuth Access Token (ya29)",
+      "category": "cloud",
+      "description": "Matches Google OAuth access tokens (ya29) logged in HTTP request / audit payloads.",
+      "pattern": "\\bya29\\.[a-zA-Z0-9_\\-]{50,}\\b",
+      "replacementTemplate": "[GCP_ACCESS_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "ya29.a0AfH6SMDabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+      ]
+    },
+    {
+      "id": "env_cloudflare_api_key",
+      "name": "Cloudflare Global API Key & Origin CA Key",
+      "category": "cloud",
+      "description": "Matches Cloudflare 37-hex Global API keys and v1.0 Origin CA keys.",
+      "pattern": "(?:X-Auth-Key|CLOUDFLARE_API_KEY)\\s*[:=]\\s*[\\\"']?([a-f0-9]{37}|v1\\.0-[a-f0-9]{32}-[a-f0-9]{32})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[CLOUDFLARE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "X-Auth-Key: 1234567890abcdef1234567890abcdef12345",
+        "CLOUDFLARE_API_KEY = \"v1.0-1234567890abcdef1234567890abcdef-1234567890abcdef1234567890abcdef\""
+      ]
+    },
+    {
+      "id": "env_kafka_sasl_jaas_config",
+      "name": "Apache Kafka SASL JAAS Login Module Password",
+      "category": "credentials",
+      "description": "Matches sasl.jaas.config lines in Kafka client properties exposing Plain or SCRAM passwords.",
+      "pattern": "sasl\\.jaas\\.config=org\\.apache\\.kafka\\.common\\.security\\.[a-zA-Z0-9.]+\\s+required\\s+username=[\\\"'][^\\\"']+[\\\"']\\s+password=[\\\"']([^\\\"']+)[\\\"'];",
+      "flags": "i",
+      "replacementTemplate": "[KAFKA_SASL_PASSWORD_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username=\"alice\" password=\"SuperSecretKafkaPass123!\";"
+      ]
+    },
+    {
+      "id": "ins_policy_number_general",
+      "name": "Insurance Policy Number (Life / Health / Auto / Property)",
+      "category": "financial",
+      "description": "Matches insurance policy identifiers formatted with common prefixes (POL, PA, HL, LIFE, AUTO) or context keywords.",
+      "pattern": "(?:policy(?:\\s*number|\\s*no|\\s*#)?|policy_num)\\s*[:=\\-]?\\s*\\b([A-Z0-9]{2,4}-[0-9]{5,10}|[0-9]{8,12})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INS_POLICY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Policy Number: POL-98124012",
+        "policy #: PA-1029384",
+        "Policy No: 1234567890"
+      ]
+    },
+    {
+      "id": "ins_claim_number",
+      "name": "Insurance Claim / Loss Tracking Number",
+      "category": "financial",
+      "description": "Matches insurance claim reference numbers assigned to auto, property, casualty, and medical loss filings.",
+      "pattern": "(?:claim(?:\\s*number|\\s*no|\\s*#)?|loss(?:\\s*report)?(?:\\s*number|\\s*#)?)\\s*[:=\\-]?\\s*\\b(CLM-[A-Z0-9]{6,12}|[A-Z]{2,3}-[0-9]{6,10}|[0-9]{9,12})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INS_CLAIM_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Claim Number: CLM-83920194",
+        "claim #: AUT-1029384",
+        "Claim No: 918273645"
+      ]
+    },
+    {
+      "id": "ins_health_mbi",
+      "name": "US Medicare Beneficiary Identifier (MBI)",
+      "category": "phi",
+      "description": "Matches US CMS Medicare Beneficiary Identifiers (11-character alphanumeric format with letters in positions 2, 5, 8, 9).",
+      "pattern": "\\b[1-9][AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9][- ]?[AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9AC-HJ-NP-RT-Yac-hj-np-rt-y][0-9][- ]?[AC-HJ-NP-RT-Yac-hj-np-rt-y]{2}[0-9]{2}\\b",
+      "replacementTemplate": "[MEDICARE_MBI_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "1EG4-TE5-MK72",
+        "1EG4TE5MK72",
+        "2AC4-RE6-PW19"
+      ]
+    },
+    {
+      "id": "ins_nhs_number",
+      "name": "UK NHS Patient & Health Identifier",
+      "category": "phi",
+      "description": "Matches UK National Health Service 10-digit identifier in 3-3-4 spaced or contiguous format.",
+      "pattern": "\\b[0-9]{3}[ ]?[0-9]{3}[ ]?[0-9]{4}\\b",
+      "replacementTemplate": "[UK_NHS_NUMBER_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "943 476 5919",
+        "9876543210"
+      ]
+    },
+    {
+      "id": "ins_vin_number",
+      "name": "Vehicle Identification Number (VIN) - Auto Insurance",
+      "category": "pii",
+      "description": "Matches 17-character ISO 3779 Vehicle Identification Numbers used in auto insurance policies and accident claims.",
+      "pattern": "\\b[A-HJ-NPR-Z0-9]{17}\\b",
+      "replacementTemplate": "[VEHICLE_VIN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "1HGCR2F83HA123456",
+        "WAUZZZ4G8EN123456",
+        "1FTFW1ET4EF123456"
+      ]
+    },
+    {
+      "id": "ins_icd10_diagnosis",
+      "name": "ICD-10-CM Medical Diagnosis Code",
+      "category": "phi",
+      "description": "Matches International Classification of Diseases (ICD-10) diagnosis codes used in health and disability claims.",
+      "pattern": "(?:diagnosis|dx|icd[- ]?10(?:\\s*code)?)\\s*[:=\\-]?\\s*\\b([A-TV-Z][0-9][0-9A-Z](?:\\.[0-9A-Z]{1,4})?)\\b",
+      "flags": "i",
+      "replacementTemplate": "[ICD10_DIAGNOSIS_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Diagnosis: E11.9",
+        "ICD-10 Code: I10",
+        "Dx: A00.0",
+        "icd10: Z00.00"
+      ]
+    },
+    {
+      "id": "ins_cpt_procedure",
+      "name": "Current Procedural Terminology (CPT) Healthcare Code",
+      "category": "phi",
+      "description": "Matches 5-digit CPT procedure codes associated with healthcare insurance billings and treatment authorisations.",
+      "pattern": "(?:cpt(?:\\s*code)?|procedure(?:\\s*code)?)\\s*[:=\\-]?\\s*\\b([0-9]{4}[0-9A-Z]|\\b99[2-4][0-9]{2}\\b)\\b",
+      "flags": "i",
+      "replacementTemplate": "[CPT_PROCEDURE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "CPT Code: 99213",
+        "procedure: 99214",
+        "CPT: 00100"
+      ]
+    },
+    {
+      "id": "ins_rx_ndc_number",
+      "name": "National Drug Code (NDC) - Pharmacy Benefit Claim",
+      "category": "phi",
+      "description": "Matches 10 or 11-digit National Drug Code (NDC) numbers used in prescription drug insurance claims.",
+      "pattern": "(?:ndc(?:\\s*code)?|rx(?:\\s*ndc)?)\\s*[:=\\-]?\\s*\\b([0-9]{4,5}-[0-9]{3,4}-[0-9]{1,2})\\b",
+      "flags": "i",
+      "replacementTemplate": "[NDC_DRUG_CODE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "NDC: 00002-1433-80",
+        "NDC Code: 50580-449-01",
+        "rx: 00069-3150-83"
+      ]
+    },
+    {
+      "id": "ins_group_policy_number",
+      "name": "Group Benefit Plan Policy / Sponsor ID",
+      "category": "financial",
+      "description": "Matches employer corporate group benefit plan numbers and health insurance sponsor IDs.",
+      "pattern": "(?:group(?:\\s*number|\\s*no|\\s*#)?|plan(?:\\s*number|\\s*#)?)\\s*[:=\\-]?\\s*\\b(GRP-[A-Z0-9]{5,10}|[A-Z]{2,4}[0-9]{5,8})\\b",
+      "flags": "i",
+      "replacementTemplate": "[GROUP_PLAN_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Group Number: GRP-981024",
+        "group #: ACME10293",
+        "Group No: GP987654"
+      ]
+    },
+    {
+      "id": "ins_producer_npn",
+      "name": "Insurance Producer / Agent License (NPN)",
+      "category": "pii",
+      "description": "Matches National Producer Numbers (NPN) identifying insurance agents, brokers, and agency principals.",
+      "pattern": "(?:npn(?:\\s*number|\\s*#)?|producer(?:\\s*id|\\s*number)?|agent(?:\\s*npn|\\s*license))\\s*[:=\\-]?\\s*\\b([0-9]{7,10})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INS_PRODUCER_NPN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "NPN Number: 17283940",
+        "producer id: 9812736",
+        "Agent License: 1029384756"
+      ]
+    },
+    {
+      "id": "ins_underwriting_score",
+      "name": "Underwriting Risk Class & Mortality Rating",
+      "category": "financial",
+      "description": "Matches confidential underwriting classifications, risk scores, and mortality adjustment factors.",
+      "pattern": "(?:underwriting\\s*class|risk\\s*score|mortality\\s*rating)\\s*[:=\\-]?\\s*(?:Class\\s+[A-Z0-9]+|Preferred\\s+Plus|Standard\\s+Smoker|Substandard\\s+Table\\s+[A-Z0-9]+|\\b[0-9]{2,3}(?:\\.[0-9]+)?%?\\b)",
+      "flags": "i",
+      "replacementTemplate": "[UNDERWRITING_RISK_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Underwriting Class: Preferred Plus",
+        "risk score: 785",
+        "mortality rating = Substandard Table B"
+      ]
+    },
+    {
+      "id": "ins_telematics_obd_id",
+      "name": "Vehicle Telematics & OBD-II Tracker Device ID",
+      "category": "pii",
+      "description": "Matches connected vehicle OBD-II dongle IDs and telematics serial numbers in usage-based auto insurance.",
+      "pattern": "(?:obd(?:-ii)?\\s*id|telematics(?:\\s*imei|\\s*device|\\s*id)?)\\s*[:=\\-]?\\s*[\\\"']?([A-Z0-9]{12,18})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[TELEMATICS_DEVICE_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "OBD-II ID: 864920039182736",
+        "telematics imei: 359182049182736",
+        "telematics device = 'DEV981240192834'"
+      ]
+    },
+    {
+      "id": "ins_sepa_mandate_umr",
+      "name": "Insurance Premium Direct Debit Mandate (UMR)",
+      "category": "financial",
+      "description": "Matches Unique Mandate Reference (UMR) for SEPA automatic premium collection debit orders.",
+      "pattern": "(?:mandate\\s*ref(?:erence)?|umr\\s*number)\\s*[:=\\-]?\\s*[\\\"']?([A-Za-z0-9\\-\\/]{10,35})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[SEPA_MANDATE_UMR_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Mandate Reference: POL-SEPA-2026-98124",
+        "UMR Number: INS/MANDATE/88991122"
+      ]
+    },
+    {
+      "id": "ins_beneficiary_ssn_split",
+      "name": "Life Insurance Beneficiary Allocation Details",
+      "category": "pii",
+      "description": "Matches designated life insurance beneficiary names associated with allocation percentages.",
+      "pattern": "(?:primary|contingent)?\\s*beneficiary\\s*[:=\\-]\\s*([A-Za-z\\s.]+)\\s*[,;]?\\s*(?:share|percent|allocation|%)\\s*[:=\\-]?\\s*([0-9]{1,3}%?)",
+      "flags": "i",
+      "replacementTemplate": "beneficiary: [BENEFICIARY_NAME_{INDEX}], allocation: [ALLOCATION_PCT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "Primary Beneficiary: Jane Doe, Share: 50%",
+        "beneficiary = Robert Smith; percent: 100%",
+        "Contingent Beneficiary: Michael Brown, allocation: 25%"
+      ]
+    },
+    {
+      "id": "ins_loss_adjuster_payout",
+      "name": "Claim Settlement Reserve & Payout Amount",
+      "category": "financial",
+      "description": "Matches confidential claim reserve limits, approved settlement figures, and loss adjuster valuations.",
+      "pattern": "(?:settlement\\s*amount|claim\\s*reserve|approved\\s*payout|loss\\s*estimate)\\s*[:=\\-]?\\s*([$€£AEDSAR\\s]*[0-9]{1,3}(?:,[0-9]{3})*(?:\\.[0-9]{2})?)",
+      "flags": "i",
+      "replacementTemplate": "settlement: [CLAIM_PAYOUT_AMOUNT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Settlement Amount: $145,000.00",
+        "claim reserve = €35,000.00",
+        "Approved Payout: SAR 95,000.00"
+      ]
+    },
+    {
+      "id": "ins_fraud_siu_flag",
+      "name": "Special Investigation Unit (SIU) Fraud Case ID",
+      "category": "financial",
+      "description": "Matches insurance fraud investigation case identifiers and SIU tracking numbers.",
+      "pattern": "(?:siu[- ]?case(?:\\s*id|\\s*number|\\s*#)?|fraud[- ]?investigation)\\s*[:=\\-]?\\s*\\b(SIU-[0-9]{4}-[0-9]{4,8}|FRD-[0-9]{6,10})\\b",
+      "flags": "i",
+      "replacementTemplate": "[SIU_FRAUD_CASE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "SIU-CASE ID: SIU-2026-981245",
+        "siu case #: SIU-2025-00129",
+        "fraud investigation: FRD-981024"
+      ]
+    },
+    {
+      "id": "ins_disability_rating",
+      "name": "Disability Percentage & Impairment Rating",
+      "category": "phi",
+      "description": "Matches permanent disability rating percentages and whole person impairment assessments.",
+      "pattern": "(?:disability\\s*rating|impairment\\s*rating|wpi\\s*rating)\\s*[:=\\-]?\\s*([0-9]{1,3}\\s*%(?:\\s*(?:whole\\s*person|disability))?)",
+      "flags": "i",
+      "replacementTemplate": "[DISABILITY_RATING_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Disability Rating: 45%",
+        "impairment rating: 30% whole person",
+        "wpi rating = 60%"
+      ]
+    },
+    {
+      "id": "ins_prior_authorization",
+      "name": "Healthcare Insurance Prior Authorization Number",
+      "category": "phi",
+      "description": "Matches medical prior authorization, pre-certification, and referral approval reference numbers.",
+      "pattern": "(?:prior\\s*auth(?:orization)?|pre-?cert(?:ification)?)\\s*(?:number|no|#)?\\s*[:=\\-]?\\s*\\b(AUTH-[0-9A-Z]{6,12}|PA-[0-9]{7,10}|[0-9]{9,12})\\b",
+      "flags": "i",
+      "replacementTemplate": "[PRIOR_AUTH_NUMBER_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "Prior Authorization Number: AUTH-98124AC",
+        "pre-cert #: PA-10293847",
+        "Prior Auth: 918273645"
+      ]
+    },
+    {
+      "id": "soft_stripe_webhook_secret",
+      "name": "Stripe Webhook Signing Secret",
+      "category": "credentials",
+      "description": "Matches Stripe webhook endpoint signature verification secrets starting with whsec_.",
+      "pattern": "\\bwhsec_[a-zA-Z0-9]{32,64}\\b",
+      "replacementTemplate": "[STRIPE_WEBHOOK_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "whsec_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "whsec_0123456789abcdefghijklmnopqrstuv"
+      ]
+    },
+    {
+      "id": "soft_stripe_customer_id",
+      "name": "Stripe Customer Identifier (cus_)",
+      "category": "financial",
+      "description": "Matches Stripe customer object identifiers associated with corporate billing accounts.",
+      "pattern": "\\bcus_[a-zA-Z0-9]{14,24}\\b",
+      "replacementTemplate": "[STRIPE_CUSTOMER_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "cus_N638dkLmP0192A",
+        "cus_9812401928340192"
+      ]
+    },
+    {
+      "id": "soft_stripe_subscription_id",
+      "name": "Stripe Subscription Identifier (sub_)",
+      "category": "financial",
+      "description": "Matches Stripe recurring SaaS subscription identifiers in API payloads and database records.",
+      "pattern": "\\bsub_[a-zA-Z0-9]{14,24}\\b",
+      "replacementTemplate": "[STRIPE_SUBSCRIPTION_ID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "sub_1M4N2b2eZvKYlo2C9812",
+        "sub_1029384756102938"
+      ]
+    },
+    {
+      "id": "soft_stripe_payment_intent",
+      "name": "Stripe Payment Intent Client Secret",
+      "category": "credentials",
+      "description": "Matches Stripe client secret keys used to confirm client-side payments.",
+      "pattern": "\\bpi_[a-zA-Z0-9]{24}_secret_[a-zA-Z0-9]{24,32}\\b",
+      "replacementTemplate": "[STRIPE_PAYMENT_INTENT_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "pi_3M4N2b2eZvKYlo2C01234567_secret_abcdefghijklmnopqrstuvwx"
+      ]
+    },
+    {
+      "id": "soft_launchdarkly_sdk_key",
+      "name": "LaunchDarkly Feature Flag SDK Key",
+      "category": "credentials",
+      "description": "Matches LaunchDarkly server-side and client-side feature management SDK keys.",
+      "pattern": "\\bsdk-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+      "replacementTemplate": "[LAUNCHDARKLY_SDK_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "sdk-a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"
+      ]
+    },
+    {
+      "id": "soft_salesforce_client_secret",
+      "name": "Salesforce Connected App Client Secret",
+      "category": "credentials",
+      "description": "Matches Salesforce CRM Connected App OAuth consumer secrets in configuration settings.",
+      "pattern": "(?:salesforce[_-]?secret|sf[_-]?client[_-]?secret)\\s*[:=]\\s*[\\\"']?([0-9A-Za-z]{32,64})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[SALESFORCE_CLIENT_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "salesforce_secret = \"1234567890abcdef1234567890abcdef1234567890abcdef\"",
+        "sf_client_secret: 'A1B2C3D4E5F60718293A4B5C6D7E8F90'"
+      ]
+    },
+    {
+      "id": "soft_hubspot_api_key",
+      "name": "HubSpot Private App Access Token",
+      "category": "credentials",
+      "description": "Matches HubSpot CRM Private App API tokens starting with pat-na1- or pat-eu1-.",
+      "pattern": "\\bpat-(?:na1|eu1)-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b",
+      "replacementTemplate": "[HUBSPOT_APP_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical"
+    },
+    {
+      "id": "soft_zendesk_api_token",
+      "name": "Zendesk Support API Token",
+      "category": "credentials",
+      "description": "Matches Zendesk customer support REST API tokens configured in backend services.",
+      "pattern": "(?:zendesk[_-]?token|zd[_-]?api[_-]?key)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9]{40})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[ZENDESK_API_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "zendesk_token = \"abcdefghijklmnopqrstuvwxyz0123456789ABCD\"",
+        "zd_api_key: '0123456789abcdef0123456789abcdef01234567'"
+      ]
+    },
+    {
+      "id": "soft_segment_write_key",
+      "name": "Segment.io Analytics Write Key",
+      "category": "credentials",
+      "description": "Matches Twilio Segment customer data platform source write keys.",
+      "pattern": "(?:segment[_-]?write[_-]?key|analytics[_-]?write[_-]?key)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9]{32})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[SEGMENT_WRITE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "segment_write_key = \"a1b2c3d4e5f60718293a4b5c6d7e8f90\"",
+        "analytics_write_key: '1234567890abcdef1234567890abcdef'"
+      ]
+    },
+    {
+      "id": "soft_mixpanel_token",
+      "name": "Mixpanel Analytics Project Token",
+      "category": "credentials",
+      "description": "Matches Mixpanel customer behavior tracking project tokens.",
+      "pattern": "(?:mixpanel[_-]?token|mp[_-]?project[_-]?token)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[MIXPANEL_TOKEN_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "mixpanel_token = \"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6\"",
+        "mp_project_token: '0123456789abcdef0123456789abcdef'"
+      ]
+    },
+    {
+      "id": "soft_amplitude_api_key",
+      "name": "Amplitude Analytics API Key & Secret",
+      "category": "credentials",
+      "description": "Matches Amplitude product intelligence API keys and project secrets.",
+      "pattern": "(?:amplitude[_-]?api[_-]?key|amplitude[_-]?secret)\\s*[:=]\\s*[\\\"']?([a-f0-9]{32})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AMPLITUDE_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "amplitude_api_key = \"1234567890abcdef1234567890abcdef\"",
+        "amplitude_secret: 'a1b2c3d4e5f60718293a4b5c6d7e8f90'"
+      ]
+    },
+    {
+      "id": "soft_terraform_state_secret",
+      "name": "Terraform State (tfstate) Plaintext Database Secret",
+      "category": "cloud",
+      "description": "Matches sensitive credential values stored in plaintext within terraform.tfstate JSON files.",
+      "pattern": "\\\"(?:master_password|admin_password|db_password|private_key_pem)\\\"\\s*:\\s*\\\"([^\\\"]{8,})\\\"",
+      "flags": "i",
+      "replacementTemplate": "\"db_password\": \"[TERRAFORM_STATE_PASSWORD_{INDEX}]\"",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "\"master_password\": \"SuperSecretRdsPass2026!\"",
+        "\"db_password\": \"MyPostgresSecretPassword123\""
+      ]
+    },
+    {
+      "id": "soft_vault_secret_path",
+      "name": "HashiCorp Vault Secret KV Path",
+      "category": "credentials",
+      "description": "Matches internal Vault secret paths and mount locations in application configs and CI scripts.",
+      "pattern": "(?:vault\\s*read|vault\\s*kv\\s*get)\\s+([a-zA-Z0-9_\\-\\/]+(?:\\/production|\\/prod|\\/secrets|\\/db|\\/credentials)[a-zA-Z0-9_\\-\\/]*)",
+      "flags": "i",
+      "replacementTemplate": "vault kv get [VAULT_INTERNAL_PATH_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "vault kv get secret/data/prod/db",
+        "vault read secret/production/credentials/api_keys"
+      ]
+    },
+    {
+      "id": "soft_internal_staging_url",
+      "name": "Internal Staging & Development Microservice FQDN",
+      "category": "network",
+      "description": "Matches non-public staging, preprod, and internal cluster service endpoints.",
+      "pattern": "https?:\\/\\/[a-zA-Z0-9_\\-.]+\\.(?:staging\\.internal|preprod\\.corp|dev\\.local|internal\\.net)\\b(?::[0-9]+)?",
+      "flags": "i",
+      "replacementTemplate": "[INTERNAL_STAGING_ENDPOINT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "https://billing-service.staging.internal:8080",
+        "http://auth-api.preprod.corp",
+        "https://internal-db.dev.local:5432"
+      ]
+    },
+    {
+      "id": "soft_customer_tenant_uuid",
+      "name": "Multi-Tenant Customer Organization / Tenant UUID",
+      "category": "pii",
+      "description": "Matches enterprise multi-tenant tenant_id and org_id UUIDs in API logs and telemetry.",
+      "pattern": "(?:tenant[_-]?id|org[_-]?id|organization[_-]?id|workspace[_-]?id)\\s*[:=]\\s*[\\\"']?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[TENANT_UUID_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "tenant_id = \"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d\"",
+        "org_id: '12345678-abcd-ef01-2345-6789abcdef01'",
+        "workspace_id = \"99887766-5544-3322-1100-aabbccddeeff\""
+      ]
+    },
+    {
+      "id": "soft_database_connection_uri_extended",
+      "name": "Cloud Database URI with Embedded Auth (Snowflake / Cockroach / Redis)",
+      "category": "credentials",
+      "description": "Matches database connection URIs for Snowflake, CockroachDB, Redshift, and Redis with embedded auth credentials.",
+      "pattern": "(?:snowflake|cockroachdb|redshift|redis):\\/\\/[a-zA-Z0-9_\\-\\.%]+:([^@\\s]+)@[a-zA-Z0-9_\\-\\.]+",
+      "flags": "i",
+      "replacementTemplate": "[DATABASE_AUTH_URI_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "snowflake://db_user:SecretSnowflakePass123@xyz123.snowflakecomputing.com",
+        "cockroachdb://app:CockroachSecretPass99@db.internal:26257",
+        "redis://admin:SecretRedisAuthToken123@redis-cluster.internal:6379"
+      ]
+    },
+    {
+      "id": "soft_s3_bucket_internal",
+      "name": "Internal Cloud Storage Bucket Name (AWS S3 / GCS)",
+      "category": "cloud",
+      "description": "Matches proprietary internal S3 or Google Cloud storage bucket URLs leaking organizational naming conventions.",
+      "pattern": "(?:s3:\\/\\/|gs:\\/\\/)[a-zA-Z0-9_\\-.]*(?:prod|internal|private|backup|secrets)[a-zA-Z0-9_\\-.]*",
+      "flags": "i",
+      "replacementTemplate": "[INTERNAL_STORAGE_BUCKET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "s3://corp-prod-customer-backups-2026",
+        "gs://enterprise-private-ml-models",
+        "s3://internal-secrets-vault-data"
+      ]
+    },
+    {
+      "id": "soft_github_webhook_secret",
+      "name": "GitHub Organization Webhook Secret",
+      "category": "credentials",
+      "description": "Matches GitHub webhook HMAC verification secret tokens configured in continuous deployment listeners.",
+      "pattern": "(?:github[_-]?webhook[_-]?secret|gh[_-]?secret)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-]{20,50})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GITHUB_WEBHOOK_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "github_webhook_secret = \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6\"",
+        "gh_secret: 'SuperSecretGitHubWebhookToken123'"
+      ]
+    },
+    {
+      "id": "soft_slack_webhook_incoming",
+      "name": "Slack Incoming Webhook URL",
+      "category": "credentials",
+      "description": "Matches Slack Incoming Webhook URLs leaking team and channel notification integrations.",
+      "pattern": "https:\\/\\/hooks\\.slack\\.com\\/services\\/T[A-Z0-9]{8,11}\\/B[A-Z0-9]{8,11}\\/[a-zA-Z0-9]{24}",
+      "replacementTemplate": "[SLACK_INCOMING_WEBHOOK_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical"
+    },
+    {
+      "id": "soft_datadog_app_key_extended",
+      "name": "Datadog Application Key (Extended)",
+      "category": "credentials",
+      "description": "Matches Datadog 40-character Application Keys in monitoring configurations.",
+      "pattern": "(?:DD_APP_KEY|DATADOG_APP_KEY)\\s*[:=]\\s*[\\\"']?([a-f0-9]{40})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[DATADOG_APP_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "DD_APP_KEY = \"0123456789abcdef0123456789abcdef01234567\"",
+        "DATADOG_APP_KEY: 'abcdef0123456789abcdef0123456789abcdef01'"
+      ]
+    },
+    {
+      "id": "soft_istio_mtls_cert",
+      "name": "Istio / Envoy Service Mesh TLS Private Key",
+      "category": "credentials",
+      "description": "Matches internal mTLS certificates and keys generated by Istio Citadel / Envoy proxy.",
+      "pattern": "(?:/etc/certs/key\\.pem|/etc/istio/proxy/cert\\.pem|tls\\.key:\\s*\\\"[A-Za-z0-9+/=]{30,}\\\")",
+      "flags": "i",
+      "replacementTemplate": "[SERVICE_MESH_TLS_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "/etc/certs/key.pem",
+        "tls.key: \"LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBMTIzNDU2\""
+      ]
+    },
+    {
+      "id": "soft_grafana_admin_password",
+      "name": "Grafana Admin Server Credentials",
+      "category": "credentials",
+      "description": "Matches GF_SECURITY_ADMIN_PASSWORD in deployment Helm charts and docker-compose files.",
+      "pattern": "(?:GF_SECURITY_ADMIN_PASSWORD|grafana_admin_pass)\\s*[:=]\\s*[\\\"']?([^\\s\\\"']+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GRAFANA_ADMIN_PASSWORD_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "GF_SECURITY_ADMIN_PASSWORD = \"AdminSecretPassword123!\"",
+        "grafana_admin_pass: 'MyGrafanaStrongPass'"
+      ]
+    },
+    {
+      "id": "soft_prometheus_basic_auth",
+      "name": "Prometheus Scrape Basic Authentication Password",
+      "category": "credentials",
+      "description": "Matches basic_auth passwords in Prometheus prometheus.yml scrape configurations.",
+      "pattern": "basic_auth:\\s*\\n\\s*username:\\s*['\\\"][^'\\\"]+['\\\"]\\s*\\n\\s*password:\\s*['\\\"]([^'\\\"]+)['\\\"]",
+      "flags": "m",
+      "replacementTemplate": "[PROMETHEUS_AUTH_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "basic_auth:\n  username: 'metrics'\n  password: 'PrometheusMetricsPassword99!'"
+      ]
+    },
+    {
+      "id": "soft_apple_p8_private_key",
+      "name": "Apple APNs / App Store Connect Auth Key (.p8)",
+      "category": "credentials",
+      "description": "Matches Apple Developer Push Notification Auth Key ID and private key block.",
+      "pattern": "(?:AuthKey_[A-Z0-9]{10}\\.p8|key_id\\s*=\\s*['\\\"][A-Z0-9]{10}['\\\"])",
+      "flags": "i",
+      "replacementTemplate": "[APPLE_APNS_AUTH_KEY_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "AuthKey_2X9949ABCD.p8",
+        "key_id = '9A8B7C6D5E'"
+      ]
+    },
+    {
+      "id": "soft_android_keystore_pass",
+      "name": "Android Application Keystore Signing Password",
+      "category": "credentials",
+      "description": "Matches storePassword and keyPassword credentials inside build.gradle and key.properties.",
+      "pattern": "(?:storePassword|keyPassword)\\s*[:=]\\s*[\\\"']?([^\\s\\\"'\\r\\n]+)[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[ANDROID_KEYSTORE_PASSWORD_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "storePassword = \"MyAndroidReleasePassword123!\"",
+        "keyPassword: 'ReleaseKeyPassword99'"
+      ]
+    },
+    {
+      "id": "soft_jwt_hs256_secret",
+      "name": "JWT HMAC Secret Key Assignment",
+      "category": "credentials",
+      "description": "Matches symmetric HMAC secret keys used to sign and verify JSON Web Tokens.",
+      "pattern": "(?:JWT_SECRET|JWT_KEY|TOKEN_SECRET)\\s*[:=]\\s*[\\\"']?([a-zA-Z0-9_\\-!@#$%^&*()+=]{16,64})[\\\"']?",
+      "flags": "i",
+      "replacementTemplate": "[JWT_HMAC_SECRET_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "critical",
+      "examples": [
+        "JWT_SECRET = \"super_secret_jwt_signing_key_2026!\"",
+        "TOKEN_SECRET: 'my_very_secure_token_secret_123456'"
+      ]
+    },
+    {
+      "id": "soft_snowflake_account_uri",
+      "name": "Snowflake Account & Warehouse Locator URI",
+      "category": "cloud",
+      "description": "Matches Snowflake locator URLs with enterprise account name and region identifiers.",
+      "pattern": "https:\\/\\/[a-z0-9_\\-]+\\.(?:us-east-1|eu-west-1|ap-southeast-1)\\.snowflakecomputing\\.com",
+      "flags": "i",
+      "replacementTemplate": "[SNOWFLAKE_ACCOUNT_ENDPOINT_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "https://acme_corp.us-east-1.snowflakecomputing.com",
+        "https://data_platform.eu-west-1.snowflakecomputing.com"
+      ]
+    },
+    {
+      "id": "emp_badge_id",
+      "name": "Corporate Employee Badge ID",
+      "category": "pii",
+      "description": "Internal badge identifier format EMP-#####",
+      "pattern": "\\bEMP-[0-9]{5}\\b",
+      "replacementTemplate": "[EMPLOYEE_BADGE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "EMP-49821",
+        "EMP-00129"
+      ]
+    },
+    {
+      "id": "corp_internal_domain",
+      "name": "Corporate Internal Domain / FQDN",
+      "category": "network",
+      "description": "Internal corporate domain suffix (.corp.internal, .prod.corp)",
+      "pattern": "\\b[a-zA-Z0-9-_]+(?:\\.[a-zA-Z0-9-_]+)*\\.(?:corp\\.internal|prod\\.corp)\\b",
+      "replacementTemplate": "[INTERNAL_HOST_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "high",
+      "examples": [
+        "vault-01.us-east.corp.internal",
+        "auth.prod.corp"
+      ]
+    },
+    {
+      "id": "internal_project_code",
+      "name": "Internal Project Codename",
+      "category": "devops",
+      "description": "Sensitive project codename format PROJ-XXX-####",
+      "pattern": "\\bPROJ-[A-Z]{3}-[0-9]{4}\\b",
+      "replacementTemplate": "[PROJECT_CODE_{INDEX}]",
+      "enabled": true,
+      "isCustom": false,
+      "severity": "medium",
+      "examples": [
+        "PROJ-APO-9821",
+        "PROJ-RED-1120"
+      ]
+    }
+  ],
+  "checksum": "sha256-39f6778f3a5c70487baef82723c46e6c3f38586776dab41981658bfff07d1015",
+  "generatedAt": "2026-09-13T11:33:50.755Z"
+}

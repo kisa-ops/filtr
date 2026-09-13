@@ -1,0 +1,9 @@
+{
+  "organizationName": "Enterprise Security Operations",
+  "centralPolicyUrl": "/enterprise_policy.json",
+  "sessionTimeoutMinutes": 15,
+  "maxFailedAttempts": 5,
+  "lockoutDurationSeconds": 60,
+  "enforceCentralizedPolicy": true,
+  "masterTokenConfigured": true
+}

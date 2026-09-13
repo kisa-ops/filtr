@@ -45,7 +45,7 @@ Before deploying `filtr` to an enterprise environment, review the following chec
 | **Host Persistence** | Auto-restart on server reboot | Enable the systemd service (`systemctl enable filtr.service`). |
 | **Log Management** | Prevent disk space exhaustion | Enforce Docker log rotation (`max-size: 10m`, `max-file: 3`). |
 | **Security Headers** | Prevent clickjacking and MIME attacks | Enforce `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, and `HSTS`. |
-| **Air-Gapped Operation** | Disconnected internal corporate networks | Use pre-built offline container packages (`filtr-docker-v1.3.0.tar.gz`). |
+| **Air-Gapped Operation** | Disconnected internal corporate networks | Use pre-built offline container packages (`filtr-docker-v1.5.0.tar.gz`). |
 | **Lifecycle & Rollbacks** | Zero-downtime maintenance and rollback | Use `./upgrade.sh --version <tag>` or `./upgrade.sh --rollback <tag>`. |
 
 ---
@@ -117,7 +117,7 @@ server {
 
 ### Upgrading to a Specific Version
 ```bash
-./upgrade.sh --version v1.3.0
+./upgrade.sh --version v1.5.0
 ```
 
 ### Emergency Stack Rollback
@@ -185,7 +185,7 @@ spec:
     spec:
       containers:
       - name: filtr
-        image: ghcr.io/kisa-ops/filtr:v1.3.0
+        image: ghcr.io/kisa-ops/filtr:v1.6.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -258,3 +258,67 @@ docker compose logs -f --tail=100
 ```
 
 Support & Issue Tracker: [https://github.com/kisa-ops/filtr/issues](https://github.com/kisa-ops/filtr/issues)
+
+---
+
+## Default Enterprise Detection Rule Packs Deployment
+
+Every official **filtr** production deployment includes 5 pre-packaged, validated enterprise detection rule packs totaling **225+ specialized rules** shipped directly as standard static assets inside `/usr/share/nginx/html/` and served with UTF-8 JSON headers:
+
+| Rule Pack File | Rules | Coverage Scope |
+| :--- | :--- | :--- |
+| `filtr_export_all_enterprise_rules_225_pack.json` | **225** | **Grand Master Pack**: All 225 rules (PII, Financial, Cloud, Insurance, Software, Telecom, DevOps) |
+| `filtr_export_extended_sensitive_data_rules.json` | **150** | **Core Infrastructure**: 20+ National Phones, 15 IBANs, 15 Passports, AWS/GCP/Azure/Vault, Nginx/Docker/Jenkins |
+| `filtr_export_insurance_and_software_company_rules.json` | **45** | **Industry Specialized**: Insurance Policies, Claims, Medicare MBI, NHS, VIN, ICD-10, CPT, Stripe, SaaS API Keys |
+| `filtr_export_gcc_java_angular_dev_rules.json` | **30** | **Regional & Stack**: GCC Telecoms (KSA/UAE/QAT/KWT/OMN/BHR), JVM Stack Traces & Thread Dumps, Angular Errors |
+| `filtr_export_master_enterprise_pack_195_rules.json` | **195** | **Combined Enterprise**: Core 150 Infrastructure + 45 Insurance & Software Company detectors |
+
+### Deployment & Serving Configuration
+- **Nginx Route**: Dedicated location block `location ~* ^/filtr_export_.*\.json$` with `Content-Type: application/json; charset=utf-8` and browser caching headers.
+- **Direct HTTP Access**: Available via `GET /<pack_filename>` (e.g. `curl -s http://localhost:8080/filtr_export_all_enterprise_rules_225_pack.json`).
+- **One-Click Administration**: Admin Portal includes the **"Deployment Rule Packs (225)"** manager to quick-load or download any rule pack with automated duplicate detection.
+- **Zero Configuration**: Rules are pre-integrated into the application runtime catalog out-of-the-box upon deployment.
+
+---
+
+## 7. Centralized Enterprise Administration & Production Security
+
+filtr features a hardened, centralized enterprise administration architecture designed to prevent unauthorized browser-local privilege escalation and ensure unified data protection policies across all corporate endpoints.
+
+### 7.1 Centralized Enterprise Policy Distribution (`enterprise_policy.json`)
+
+- **Single Source of Truth**: The canonical corporate policy is served directly by the container at `/enterprise_policy.json`.
+- **Automatic Client Synchronization**: When any employee opens filtr, the client automatically fetches the latest centralized policy manifest on session startup.
+- **Immediate Propagation**: Nginx delivers `enterprise_policy.json` and `enterprise_config.json` with `Cache-Control: no-cache, must-revalidate, max-age=0` so policy updates take effect immediately without browser cache delays.
+- **Air-Gap Support**: If the container is offline or disconnected, clients seamlessly fall back to the built-in enterprise catalog.
+
+### 7.2 Enterprise Administrator Access Control & Credential Governance
+
+- **Zero In-Browser Self-Setup**: Unauthenticated users in new browser profiles or private sessions are strictly prevented from initializing or claiming administrator privileges.
+- **Enterprise Master Passkey**:
+  - Out-of-the-box Default: `FiltrAdmin@2026!`
+  - Derivation: PBKDF2 with SHA-256 (100,000 rounds) and dedicated cryptographic salt.
+- **Master Provisioning & Key Rotation Token**:
+  - Token: `FILTR-ENT-SEC-2026`
+  - Used by authorized SecOps personnel to rotate the administrator passkey or recover access in emergencies.
+- **Session Hardening**:
+  - Inactivity Timeout: 15-minute sliding session window. Inactive sessions automatically expire.
+  - Rate-Limiting & Lockout: 5 consecutive failed login attempts trigger an immediate 60-second administrative lockout with exponential backoff.
+  - Side-Channel Protection: Constant-time string comparisons prevent cryptographic timing attacks.
+
+### 7.3 SecOps Policy Publishing Workflow
+
+1. Authenticate to the Admin Portal via the **Admin Console** button using the Enterprise Passkey.
+2. Manage, add, or toggle detection rules, adjust compliance presets (SOC-2, HIPAA, GDPR, PCI-DSS, DevOps), or configure module availability.
+3. Click **"Publish to Enterprise"** in the Rules toolbar.
+4. The system updates the cached enterprise manifest, computes a SHA-256 checksum, and downloads the updated `enterprise_policy.json`.
+5. Place the updated `enterprise_policy.json` in the Docker/Nginx webroot (`/usr/share/nginx/html/enterprise_policy.json`) to enforce company-wide.
+
+### 7.4 Enterprise Security Audit Trail
+
+All administrative security events are recorded chronologically in the **Audit Trail** tab, including:
+- Successful logins and failed authentication attempts with lockout triggers.
+- Rule creation, modification, deletion, and toggling.
+- Duplicate pattern cleanups.
+- Policy publishing and client synchronization events.
+- Audit records can be exported directly as JSON for compliance reporting and SOC-2 / ISO-27001 evidence.
