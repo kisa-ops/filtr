@@ -1,6 +1,6 @@
 services:
   filtr:
-    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v1.7.0}
+    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v1.8.1}
     container_name: filtr-app
     restart: unless-stopped
     ports:
@@ -16,6 +16,7 @@ services:
       - CHOWN
       - SETUID
       - SETGID
+      - DAC_OVERRIDE
     logging:
       driver: "json-file"
       options:
