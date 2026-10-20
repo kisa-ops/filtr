@@ -1,6 +1,6 @@
 services:
   filtr:
-    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v4.1.3}
+    image: ${FILTR_IMAGE:-ghcr.io/kisa-ops/filtr:v4.1.4}
     container_name: filtr-app
     restart: unless-stopped
     ports:
