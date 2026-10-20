@@ -448,7 +448,7 @@ bump_version() {
 
     # Git commit and Tag option
     if confirm "Commit version bump and create git tag 'v${new_ver}'?" "y"; then
-        git add package.json package-lock.json src/constants/version.ts server/package.json server/index.js server/db.js docker-compose.yml .env .env.example install.sh 2>/dev/null || true
+        git add -A
         git commit -m "chore(release): bump version to v${new_ver}"
         git tag -fa "v${new_ver}" -m "Release v${new_ver}"
         success "Created commit and tag v${new_ver}."
@@ -729,6 +729,7 @@ commit_changes() {
 # ==============================================================================
 push_source() {
     local passed_msg="${1:-}"
+    local skip_confirm="${2:-0}"
     echo ""
     echo -e "${BOLD}${CYAN}=== Push Source Code Changes ===${NC}"
     validate_repo_urls
@@ -745,16 +746,18 @@ push_source() {
         warn "You have uncommitted changes in the repository."
         git status -s
         echo ""
-        if confirm "Commit all changes before pushing?" "y"; then
+        if [ "${skip_confirm}" = "1" ] || confirm "Commit all changes before pushing?" "y"; then
             commit_changes "${passed_msg}"
         fi
     fi
 
     echo ""
     info "Preparing to push branch ${BOLD}${git_branch}${NC} and tags to Source Repo: ${BOLD}${SOURCE_REPO}${NC}..."
-    if ! confirm "Proceed with push?" "y"; then
-        info "Push cancelled."
-        return 0
+    if [ "${skip_confirm}" != "1" ]; then
+        if ! confirm "Proceed with push?" "y"; then
+            info "Push cancelled."
+            return 0
+        fi
     fi
 
     local push_target="origin"
@@ -765,12 +768,100 @@ push_source() {
         push_target="${authed_url}"
     fi
 
-    info "Pushing ${git_branch} to origin..."
+    info "Pushing ${git_branch} to ${SOURCE_REPO}..."
     git push "${push_target}" "${git_branch}"
-    info "Pushing tags to origin..."
-    git push "${push_target}" --tags
+    info "Pushing tags to ${SOURCE_REPO}..."
+    git push "${push_target}" --tags 2>/dev/null || git push "${push_target}" --tags --force 2>/dev/null || true
 
     success "Source code and tags successfully pushed to ${SOURCE_REPO}!"
+}
+
+# ==============================================================================
+# 7.5. SYNCHRONIZE PRODUCTION REPOSITORY FILES TO DISTRIBUTION REPO (kisa-ops/filtr)
+# ==============================================================================
+sync_dist_repo_files() {
+    local version="${1:-$(get_current_version)}"
+    version="${version#v}"
+    local tag="v${version}"
+    local token="${GITHUB_TOKEN:-}"
+
+    echo ""
+    info "Synchronizing production repository files to Distribution Repo: ${BOLD}${DIST_REPO}${NC}..."
+    
+    local push_dist_target="kisa"
+    if [ -n "${token}" ] && [[ "${DIST_REPO}" == https://* ]]; then
+        local authed_dist_url
+        authed_dist_url=$(echo "${DIST_REPO}" | sed -E "s|https://([^@]+@)?github.com|https://${token}@github.com|")
+        push_dist_target="${authed_dist_url}"
+    fi
+
+    # Ensure remote tracking is fetched
+    git fetch "${push_dist_target}" main:refs/remotes/kisa/main 2>/dev/null || true
+
+    local temp_branch="dist-sync-$$-${RANDOM}"
+    local temp_worktree
+    temp_worktree=$(mktemp -d "/tmp/filtr-dist-worktree.XXXXXX")
+
+    if ! git worktree add -B "${temp_branch}" "${temp_worktree}" "kisa/main" >/dev/null 2>&1; then
+        warn "Could not create worktree from kisa/main, initializing clean distribution branch..."
+        git worktree add -B "${temp_branch}" "${temp_worktree}" >/dev/null 2>&1
+    fi
+
+    # Synchronize all deployment manifests and tools
+    local dist_files=(
+        "docker-compose.yml"
+        "install.sh"
+        "upgrade.sh"
+        "manage-ssl.sh"
+        "manage-ner.sh"
+        "admin.sh"
+        "nginx.conf"
+        ".env.example"
+        ".gitignore"
+        "README.md"
+        "DEPLOYMENT.md"
+        "INSTALLATION.md"
+        "API.md"
+        "ARCHITECTURE.md"
+        "SECURITY_AUDIT.md"
+        "ROADMAP.md"
+    )
+    for f in "${dist_files[@]}"; do
+        if [ -f "${SCRIPT_DIR}/${f}" ]; then
+            cp -f "${SCRIPT_DIR}/${f}" "${temp_worktree}/${f}"
+        fi
+    done
+
+    # Synchronize rules, docs, and scripts directories
+    for d in "rules" "docs" "scripts"; do
+        if [ -d "${SCRIPT_DIR}/${d}" ]; then
+            rm -rf "${temp_worktree}/${d}"
+            cp -rf "${SCRIPT_DIR}/${d}" "${temp_worktree}/${d}"
+        fi
+    done
+
+    # Clean legacy duplicate files if present in worktree root
+    rm -f "${temp_worktree}"/filtr_export_*.json "${temp_worktree}"/enterprise_config.json "${temp_worktree}"/enterprise_policy.json 2>/dev/null || true
+
+    # Commit and push from isolated worktree
+    (
+        cd "${temp_worktree}"
+        git add -A
+        if ! git diff --cached --quiet; then
+            git commit -m "release(v${version}): update production distribution files, installer, and deployment stack"
+        fi
+        info "Pushing updated repository files to ${DIST_REPO} (main)..."
+        git push "${push_dist_target}" "${temp_branch}:main"
+        info "Pushing tag ${tag} to ${DIST_REPO}..."
+        git push "${push_dist_target}" "${tag}" --force 2>/dev/null || true
+    )
+
+    # Clean up temporary worktree and branch
+    git worktree remove --force "${temp_worktree}" >/dev/null 2>&1 || true
+    rm -rf "${temp_worktree}" 2>/dev/null || true
+    git branch -D "${temp_branch}" >/dev/null 2>&1 || true
+
+    success "Production files and release tag ${tag} synchronized to ${DIST_REPO} (main)!"
 }
 
 # ==============================================================================
@@ -807,18 +898,8 @@ publish_dist() {
 
     info "Package verified: ${tarball_path} ($(du -h "${tarball_path}" | awk '{print $1}'))"
 
-    # Push tags to kisa remote
-    info "Pushing tag ${tag} to distribution remote 'kisa'..."
-    local push_dist_target="kisa"
-    if [[ "${DIST_REPO}" == https://* ]]; then
-        local authed_dist_url
-        authed_dist_url=$(echo "${DIST_REPO}" | sed -E "s|https://([^@]+@)?github.com|https://${token}@github.com|")
-        push_dist_target="${authed_dist_url}"
-    fi
-    if ! git push "${push_dist_target}" "${tag}" 2>/dev/null; then
-        warn "Direct Git tag push to '${DIST_REPO}' declined (likely GitHub Tag Protection Ruleset)."
-        info "Proceeding with GitHub Release API creation which attaches the tag directly."
-    fi
+    # Synchronize repository files to kisa-ops/filtr main branch first
+    sync_dist_repo_files "${version}"
 
     # GitHub Release creation via GitHub API
     local repo_slug
@@ -901,6 +982,15 @@ release_pipeline() {
     # Step 2
     validate_repo_urls
 
+    # Step 2.5: Ensure all workspace changes are committed before tagging
+    local dirty
+    dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    if [ "${dirty}" -gt 0 ]; then
+        echo ""
+        info "Staging and committing all uncommitted changes before release versioning..."
+        commit_changes
+    fi
+
     # Step 3
     bump_version
 
@@ -909,10 +999,10 @@ release_pipeline() {
     current_ver=$(get_current_version)
     build_package "${current_ver}"
 
-    # Step 5
-    push_source
+    # Step 5: Push full source code and release tag to Source Repo
+    push_source "" 1
 
-    # Step 6
+    # Step 6: Synchronize repo files and publish release to Distribution Repo
     publish_dist "${current_ver}"
 
     # Step 7
@@ -976,9 +1066,12 @@ COMMANDS:
     push [message]              Check uncommitted changes, auto-populate commit message
                                 with change info, commit, and push branch + tags to source repo.
 
-    publish [version]           Publish production release to kisa-ops/filtr: pushes
-                                tags, creates GitHub Release with release notes, and
-                                uploads the offline container archive as a release asset.
+    publish [version]           Publish production release to kisa-ops/filtr: syncs
+                                repository files, pushes tags, creates GitHub Release,
+                                and uploads offline package archive asset.
+
+    sync-dist [version]         Synchronize production repository files (install.sh,
+                                upgrade.sh, compose, rules, docs) to kisa-ops/filtr.
 
     release                     Launch the full 7-step guided end-to-end release wizard:
                                 Auth -> Repos -> Version -> Build -> Push -> Publish -> Clean.
@@ -1082,7 +1175,7 @@ interactive_menu() {
         echo "  12) 💾 Commit Changes Only (Auto-Populated with Change Info)"
                 echo "  0) ❌ Exit"
         echo ""
-        echo -ne "${BOLD}Enter choice [0-12]: ${NC}"
+        echo -ne "${BOLD}Enter choice [0-13]: ${NC}"
         read -r menu_choice
         case "${menu_choice}" in
             1) ;; # show_status already runs
@@ -1097,8 +1190,9 @@ interactive_menu() {
             10) manage_ner ;;
             11) "${SCRIPT_DIR}/manage-ssl.sh" ;;
             12) commit_changes ;;
+            13) sync_dist_repo_files ;;
                         0|q|exit) echo "Goodbye!"; exit 0 ;;
-            *) warn "Invalid selection. Please choose 0-12." ;;
+            *) warn "Invalid selection. Please choose 0-13." ;;
         esac
         echo ""
         echo -ne "${DIM}Press [Enter] to return to menu...${NC}"
@@ -1140,6 +1234,10 @@ case "${1:-}" in
     publish|publish-dist)
         shift
         publish_dist "$@"
+        ;;
+    sync-dist|dist-sync)
+        shift
+        sync_dist_repo_files "$@"
         ;;
     release)
         release_pipeline
