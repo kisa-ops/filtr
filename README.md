@@ -12,7 +12,10 @@
 
 - **Zero Server-Side Retention**: Zero plaintext, telemetry, or logs leave the browser.
 - **Client-Side Cryptography**: AES-256-GCM reversible encryption with PBKDF2 (100,000 rounds).
-- **Multi-Format Ingestion**: Supports Raw Text, Large Log Files, and Tabular Excel / CSV sheets.
+- **Multi-Format Ingestion**: Supports Raw Text, Multi-tier Server Logs, Multi-sheet Excel (.xlsx/.xls), and International CSV/TSV spreadsheets.
+- **Spreadsheet Privacy & AI Rehydration Suite**: Multi-sheet workbook navigation, granular per-column rule configuration (Mask, Redact, Synthesize), OpenXML formula recalculation, international CSV delimiter auto-detection, and a dedicated **Restore / Rehydrate AI Output** workspace.
+- **Ingress/Egress Sanitization & Hydration API**: High-throughput REST endpoints (`POST /api/v1/sanitize` & `POST /api/v1/hydrate`) for inline proxying with Palo Alto NGFW, Envoy, and LLM gateways.
+- **Centralized Admin Governance**: Granular permissions over tabular operations, sub-formats, policy synchronization, and enterprise rule pack distribution.
 - **Enterprise Ready**: Shipped as a lightweight, pre-compiled, hardened container distribution with built-in healthchecks, log rotation, and zero-downtime upgrades.
 
 ---
@@ -20,7 +23,7 @@
 ## Quick Start (Installation)
 
 > [!TIP]
-> For a complete step-by-step walkthrough of the interactive installer, custom SSL/TLS setup (with Root/CA certificate chains), and operational runbooks, refer to the [Production Installation Guide (INSTALLATION.md)](./INSTALLATION.md).
+> For a complete step-by-step walkthrough of the interactive installer, custom SSL/TLS setup (with Root/CA certificate chains), and operational runbooks, refer to the [Production Installation Guide (INSTALLATION.md)](./docs/INSTALLATION.md).
 
 ### Option 1: Interactive Installer (Recommended)
 
@@ -188,6 +191,7 @@ For secure, disconnected, or air-gapped enterprise environments:
 
 | Version | Release Date | Summary of Changes |
 |---|---|---|
+| **v3.1.18** | 2026-10-13 | **Advanced Spreadsheet Privacy & AI Rehydration Suite**: Multi-sheet Excel workbook processing with dynamic sheet tabs; granular per-column rule configuration (Mask, Redact, Synthesize per column); dedicated Restore / Rehydrate AI Output workspace; downloadable CSV mapping keys; international CSV auto-detection (semicolon, tab, pipe) with UTF-8 BOM export protection; OpenXML automatic formula recalculation (`calcPr fullCalcOnLoad`); and Admin Portal tabular permission controls. |
 | **v1.4.0** | 2026-09-12 | **225 Enterprise Detection Rules Default Deployment**: Shipped 5 official enterprise rule JSON packs (Grand Master 225 pack, Core Infrastructure 150 pack, Insurance & Software 45 pack, GCC/Dev 30 pack, Combined 195 pack) integrated directly into default product deployment across Docker, Nginx, installer scripts, and client-side pre-seeded runtime catalog. Added Deployment Rule Packs modal in Admin Portal with 1-click load and direct download. |
 | **v1.3.0** | 2026-09-11 | **Admin Portal Hook Fix**: Resolved Minified React error #310 by ensuring unconditional hook execution. **Visual Guided Rule Builder**: Added regex-free detection rule builder with case/boundary controls. **Non-Destructive Import**: Append-only policy ingestion with automated duplicate detection and tagging. **Maintenance Engine**: Enhanced `upgrade.sh` with `--version`, `--rollback`, `--list`, and interactive TUI. Vault delete removal. |
 | **v1.2.0** | 2026-09-11 | **GCC Identity Detectors**: Added native detection for Qatar ID (QID), UAE Emirates ID, Saudi National ID/Iqama, Kuwait PACI Civil ID, Oman ROP Civil ID, and GCC Passports. **Cloud & Infrastructure**: Oracle Cloud (OCI) token detectors and Apache Tomcat error log patterns. Pre-packaged rule export bundles. |
@@ -223,9 +227,35 @@ For secure, disconnected, or air-gapped enterprise environments:
 | **Disk Exhaustion** | Prevent Docker logs from filling host storage. | `docker-compose.yml` includes log rotation (`max-size: 10m`, `max-file: 3`). |
 | **Monitoring** | Automated container healthchecks. | Native `/healthz` endpoint monitored by Docker engine. |
 
-Refer to [`ARCHITECTURE.md`](./ARCHITECTURE.md) for deep-dive system architecture and data persistence specifications, [`DEPLOYMENT.md`](./DEPLOYMENT.md) for reverse-proxy templates (Nginx, Traefik, Caddy), and [`SECURITY_AUDIT.md`](./SECURITY_AUDIT.md) for the SAST/DAST vulnerability review.
+Refer to [`docs/API.md`](./docs/API.md) for the Ingress/Egress Sanitization & Reversible Hydration HTTP API reference, [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for deep-dive system architecture, [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) for reverse-proxy templates (Nginx, Traefik, Caddy), [`docs/ROADMAP.md`](./docs/ROADMAP.md) for the universal AI gateway roadmap, [`docs/COMPETITOR.md`](./docs/COMPETITOR.md) for competitive positioning, and [`docs/SECURITY_AUDIT.md`](./docs/SECURITY_AUDIT.md) for the SAST/DAST vulnerability review.
 
 ---
+
+---
+
+## Operations & Administration (`admin.sh`)
+
+`filtr` provides a unified administration and release CLI utility (`./admin.sh`) to streamline operations across development and production distribution:
+
+```bash
+# Launch interactive dashboard & management menu:
+./admin.sh
+
+# Or execute commands directly:
+./admin.sh status              # System health, remotes, version & PAT status
+./admin.sh version patch       # Synchronize semantic version bump across all manifests
+./admin.sh clean tarballs      # Prune older offline tarball archives (>500MB saved)
+./admin.sh repos               # Interactively validate source & distribution repository URLs
+./admin.sh auth                # Check or interactively configure GitHub PAT
+./admin.sh build               # Build container image & export offline package (.tar.gz)
+./admin.sh push                # Commit and push source code & tags to anandprabhusk/filtr
+./admin.sh publish             # Publish release package & upload assets to kisa-ops/filtr
+./admin.sh release             # Guided end-to-end release pipeline wizard
+```
+
+### Dual-Repository Architecture
+1. **Source Code Repository**: [`https://github.com/anandprabhusk/filtr`](https://github.com/anandprabhusk/filtr) (`origin`) &mdash; Core source files, React frontend, Node backend, branches, and development commits.
+2. **Distribution Repository**: [`https://github.com/kisa-ops/filtr`](https://github.com/kisa-ops/filtr) (`kisa`) &mdash; Production releases, container images (`ghcr.io/kisa-ops/filtr`), offline container packages (`filtr-docker-v*.tar.gz`), and installation scripts.
 
 ## Support & Contributing
 

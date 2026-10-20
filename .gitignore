@@ -1,4 +1,37 @@
+# Logs
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+/dist/
+dist-ssr
+*.local
+
+# Environment variables
 .env
-*.tar.gz
-*.tar
+.env*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archives & Release Packages
+*.tar.gz
+
+# SQLite database and runtime data
+data/
+*.db
+*.db-wal
+*.db-shm

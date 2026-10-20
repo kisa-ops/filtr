@@ -1,0 +1,37 @@
+{
+  "version": "2.0.1",
+  "packName": "Banking & Cryptocurrency Detection Pack",
+  "description": "Standard detection rules for Ethereum EVM addresses and Bitcoin wallets (Legacy & Bech32).",
+  "totalRules": 2,
+  "rules": [
+    {
+      "id": "crypto_ethereum_wallet",
+      "name": "Ethereum & EVM Wallet Address",
+      "category": "financial",
+      "description": "Matches 42-character Ethereum and EVM-compatible cryptocurrency wallet addresses",
+      "pattern": "\\b0x[a-fA-F0-9]{40}\\b",
+      "replacementTemplate": "[ETH_WALLET_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        "0x00000000219ab540356cbb839cbe05303d7705fa"
+      ]
+    },
+    {
+      "id": "crypto_bitcoin_wallet",
+      "name": "Bitcoin Wallet Address",
+      "category": "financial",
+      "description": "Detects Bitcoin wallet addresses (Legacy P2PKH/P2SH and SegWit Bech32)",
+      "pattern": "\\b(?:(?:1|3)[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})\\b",
+      "replacementTemplate": "[BTC_WALLET_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+        "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      ]
+    }
+  ],
+  "exportedAt": "2026-09-21T20:45:00Z"
+}

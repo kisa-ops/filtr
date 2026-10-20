@@ -8,7 +8,7 @@
 set -euo pipefail
 
 APP_NAME="filtr"
-VERSION="v1.7.0"
+VERSION="v4.1.3"
 PACKAGE_URL="https://github.com/kisa-ops/filtr/releases/download/${VERSION}/filtr-docker-${VERSION}.tar.gz"
 IMAGE_TAG="ghcr.io/kisa-ops/filtr:${VERSION}"
 LOCAL_TAG="filtr:${VERSION}"
@@ -60,6 +60,11 @@ SSL_REDIRECT=true
 INSTALL_SYSTEMD=false
 UNATTENDED=false
 UPDATE_SSL_ONLY=false
+ADMIN_PASSKEY=""
+PRESIDIO_ENABLED=false
+PRESIDIO_MODE="disabled"
+PRESIDIO_URL="http://presidio:5001"
+COMPOSE_PROFILES="" 
 
 # -----------------------------------------------------------------------------
 # CLI Arguments Parsing
@@ -86,6 +91,8 @@ show_help() {
     echo "      --systemd             Install and enable systemd service"
     echo "      --no-systemd          Skip systemd service installation"
     echo "      --update-ssl          Update SSL certificates on running instance"
+    echo "      --passkey <key>       Set administrator passkey / master token"
+    echo "      --master-token <key>  Alias for --passkey"
     echo "  -y, --yes, --unattended   Run non-interactively using defaults or flags"
     echo "  -h, --help                Show this help message"
     echo
@@ -126,6 +133,8 @@ while [[ $# -gt 0 ]]; do
             INSTALL_SYSTEMD=false; shift ;;
         --update-ssl)
             UPDATE_SSL_ONLY=true; ENABLE_SSL=true; shift ;;
+        --passkey|--master-token)
+            ADMIN_PASSKEY="$2"; shift 2;;
         -y|--yes|--unattended)
             UNATTENDED=true; shift ;;
         -h|--help)
@@ -311,7 +320,50 @@ if [ -t 0 ] && [ "${UNATTENDED}" = false ] && [ "${UPDATE_SSL_ONLY}" = false ]; 
     fi
 
     echo
-    echo -e "${BOLD}--- [4/4] Production System Integration ---${NC}"
+    echo -e "${BOLD}--- [4/5] Administrator Master Token & Security ---${NC}"
+    echo "Set the initial Administrator Passkey / Master Token for accessing the Admin Console."
+    read -rp "Enter Master Token / Admin Passkey [press Enter to auto-generate]: " INPUT_PASSKEY
+    if [ -n "${INPUT_PASSKEY}" ]; then
+        ADMIN_PASSKEY="${INPUT_PASSKEY}"
+    elif [ -z "${ADMIN_PASSKEY}" ]; then
+        ADMIN_PASSKEY="$(openssl rand -base64 15 2>/dev/null | tr -dc 'A-Za-z0-9!@#%^&*' | head -c 16 || echo "FiltrMaster@2026!")"
+        info "Generated secure Admin Master Token: ${BOLD}${GREEN}${ADMIN_PASSKEY}${NC}"
+    fi
+
+    echo
+    echo -e "${BOLD}--- [5/6] AI / Deep NER Detection Engine (Microsoft Presidio) ---${NC}"
+    echo -e "${GRAY}Provides advanced context-aware ML detection for unstructured names, locations, and regional entities.${NC}"
+    echo -e "  1) Enable Local Sidecar Container (Allocates ~1GB RAM for local spaCy model)"
+    echo -e "  2) Connect to External / Remote Presidio Server (Runs on separate hardware/VM)"
+    echo -e "  3) Skip for now (Fast-path regex rules only; can configure later via Admin Portal) [default]"
+    read -rp "Select option [1-3] (default: 3): " NER_CHOICE
+    case "${NER_CHOICE}" in
+        1)
+            PRESIDIO_ENABLED=true
+            PRESIDIO_MODE="local"
+            PRESIDIO_URL="http://presidio:5001"
+            COMPOSE_PROFILES="ner"
+            info "Local Presidio sidecar selected (container profile: ner)."
+            ;;
+        2)
+            read -rp "Enter Remote Presidio API URL [default: http://localhost:5001]: " INPUT_P_URL
+            PRESIDIO_ENABLED=true
+            PRESIDIO_MODE="remote"
+            PRESIDIO_URL="${INPUT_P_URL:-http://localhost:5001}"
+            COMPOSE_PROFILES=""
+            info "Remote Presidio server configured: ${PRESIDIO_URL}"
+            ;;
+        *)
+            PRESIDIO_ENABLED=false
+            PRESIDIO_MODE="disabled"
+            PRESIDIO_URL="http://presidio:5001"
+            COMPOSE_PROFILES=""
+            info "AI/NER engine disabled. Fast-path regex rules active."
+            ;;
+    esac
+
+    echo
+    echo -e "${BOLD}--- [6/6] Production System Integration ---${NC}"
     if command -v systemctl >/dev/null 2>&1; then
         read -rp "Install and enable systemd service (auto-starts on system boot)? [y/N]: " ASK_SYSTEMD
         if [[ "${ASK_SYSTEMD}" =~ ^[Yy]$ ]]; then
@@ -324,6 +376,11 @@ elif [ "${UPDATE_SSL_ONLY}" = true ] && [ -t 0 ]; then
     prompt_file_path "SSL Server Certificate (.crt / fullchain.pem)" SSL_CERT_PATH false
     prompt_file_path "SSL Private Key (.key / privkey.pem)" SSL_KEY_PATH false
     prompt_file_path "Root or CA Certificate (ca.pem / rootCA.crt)" SSL_CA_PATH true
+fi
+
+# Auto-generate secure Admin Passkey / Master Token if not specified
+if [ -z "${ADMIN_PASSKEY}" ]; then
+    ADMIN_PASSKEY="$(openssl rand -base64 15 2>/dev/null | tr -dc 'A-Za-z0-9!@#%^&*' | head -c 16 || echo "FiltrMaster@2026!")"
 fi
 
 # -----------------------------------------------------------------------------
@@ -367,7 +424,8 @@ if [ "${SRC_DIR}" != "${INSTALL_DIR}" ]; then
     [ -f "${SRC_DIR}/upgrade.sh" ] && cp -f "${SRC_DIR}/upgrade.sh" "${INSTALL_DIR}/"
     [ -f "${SRC_DIR}/manage-ssl.sh" ] && cp -f "${SRC_DIR}/manage-ssl.sh" "${INSTALL_DIR}/"
     # Copy all enterprise rules JSON packs as part of default product deployment
-    for json_file in "${SRC_DIR}"/filtr_export_*.json "${SRC_DIR}"/public/filtr_export_*.json; do
+    mkdir -p "${INSTALL_DIR}/rules"
+    for json_file in "${SRC_DIR}"/rules/filtr_export_*.json "${SRC_DIR}"/filtr_export_*.json "${SRC_DIR}"/public/filtr_export_*.json; do
         [ -f "${json_file}" ] && cp -f "${json_file}" "${INSTALL_DIR}/"
     done
     if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
@@ -405,6 +463,15 @@ SSL_PORT=${SSL_PORT}
 SSL_DOMAIN=${SSL_DOMAIN}
 SSL_REDIRECT=${SSL_REDIRECT}
 FILTR_IMAGE=${IMAGE_TAG}
+ADMIN_INITIAL_PASSWORD=${ADMIN_PASSKEY}
+ADMIN_MASTER_TOKEN=${ADMIN_PASSKEY}
+
+# Pluggable AI / Deep NER Detection Engine (Microsoft Presidio)
+PRESIDIO_ENABLED=${PRESIDIO_ENABLED}
+PRESIDIO_MODE=${PRESIDIO_MODE}
+PRESIDIO_URL=${PRESIDIO_URL}
+PRESIDIO_CONFIDENCE_THRESHOLD=0.6
+COMPOSE_PROFILES=${COMPOSE_PROFILES}
 EOF
 fi
 
@@ -418,6 +485,8 @@ services:
     restart: unless-stopped
     ports:
       - "\${BIND_IP:-0.0.0.0}:\${PORT:-8080}:80"
+    volumes:
+      - filtr-data:/data
     logging:
       driver: "json-file"
       options:
@@ -429,6 +498,10 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+volumes:
+  filtr-data:
+    name: filtr-data
 EOF
 fi
 
@@ -447,8 +520,15 @@ fi
 EOF
 chmod +x manage-ssl.sh
 
+# Ensure manage-ner.sh exists in installation directory
+if [ -f "${SRC_DIR}/manage-ner.sh" ]; then
+    cp -f "${SRC_DIR}/manage-ner.sh" "${INSTALL_DIR}/manage-ner.sh"
+    chmod +x "${INSTALL_DIR}/manage-ner.sh"
+fi
+
+
 # Ensure upgrade.sh exists and is up-to-date in installation directory
-if [ -f "${SRC_DIR}/upgrade.sh" ]; then
+if [ -f "${SRC_DIR}/upgrade.sh" ] && [ "${SRC_DIR}" != "${INSTALL_DIR}" ]; then
     cp -f "${SRC_DIR}/upgrade.sh" "${INSTALL_DIR}/upgrade.sh"
     chmod +x "${INSTALL_DIR}/upgrade.sh"
 else
@@ -462,6 +542,9 @@ else
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
+
 APP_NAME="filtr"
 REPO="kisa-ops/filtr"
 
@@ -472,6 +555,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 MAGENTA='\033[0;35m'
 DIM='\033[2m'
+GRAY='\033[0;90m'
 NC='\033[0m'
 
 info()    { echo -e "${CYAN}[INFO]${NC} $*"; }
@@ -481,28 +565,47 @@ error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 
 show_help() {
     cat << 'EOF'
-filtr Stack Upgrade & Rollback Utility
+================================================================================
+  filtr Production Stack Upgrade, Rollback & Deployment Utility
+================================================================================
+
+OVERVIEW:
+    Manages zero-downtime rolling upgrades and rollbacks for the filtr enterprise
+    privacy gateway container stack. Supports online deployment (GHCR / GitHub
+    Releases) and 100% offline air-gapped environments via local tar packages.
 
 USAGE:
     ./upgrade.sh [OPTIONS]
 
 OPTIONS:
-    -v, --version <tag>     Target a specific version tag to deploy (e.g., v1.3.0, v1.2.0, latest)
-    -r, --rollback <tag>    Rollback stack to an earlier release tag with confirmation
-    -l, --list, --versions  List all available published versions from GitHub
-    -y, --yes               Non-interactive mode; auto-confirm prompts
-    -h, --help              Display this help manual and exit
+    -v, --version <tag>     Target a specific version tag to deploy
+                            (e.g., v1.8.4, v2.0.0, latest)
+    -r, --rollback <tag>    Safely rollback container stack to a previous version
+    -l, --list, --versions  Query and list all official published releases
+    --enable-ner            Deploy and activate local Presidio AI/NER sidecar (isolated, 0 host ports)
+    --disable-ner           Disable AI/NER sidecar and free system memory
+    --status-ner            Check health and security isolation of AI/NER sidecar
+    -y, --yes               Non-interactive mode; auto-confirm all upgrade prompts
+    -h, --help              Show this detailed command reference and operational guide
+
+OFFLINE & AIR-GAPPED DEPLOYMENTS:
+    To upgrade in an offline or air-gapped environment without internet access:
+    1. Download the offline archive: filtr-docker-<version>.tar.gz
+    2. Place it in the installation directory: ./filtr-docker-<version>.tar.gz
+    3. Run: ./upgrade.sh -v <version> -y
+    The script automatically detects, loads, and cross-tags the offline image.
 
 EXAMPLES:
-    ./upgrade.sh                      # Launch interactive upgrade / rollback wizard
-    ./upgrade.sh --version v1.3.0     # Deploy specific version v1.3.0
-    ./upgrade.sh --rollback v1.2.0    # Rollback production stack to v1.2.0
-    ./upgrade.sh --list               # List all available releases
-    ./upgrade.sh -v latest -y         # Silently update to latest release
+    ./upgrade.sh                       # Launch the interactive guided upgrade wizard
+    ./upgrade.sh -l                    # View all published versions in a table
+    ./upgrade.sh --version v1.8.4      # Upgrade to version v1.8.4 with confirmation
+    ./upgrade.sh -v latest -y          # Unattended upgrade to latest stable release
+    ./upgrade.sh --rollback v1.8.0     # Revert deployment to v1.8.0 with backup validation
+================================================================================
 EOF
 }
 
-# Normalize version string: ensures '1.3.0' becomes 'v1.3.0' unless 'latest'
+# Normalize version string: ensures '1.3.0' becomes 'v1.4.0' unless 'latest'
 normalize_version() {
     local v="$1"
     v="$(echo "${v}" | tr -d '[:space:]')"
@@ -592,11 +695,18 @@ except Exception:
 # Detect currently deployed version
 get_current_version() {
     local cur="unknown"
-    if [ -f .env ]; then
-        local img_val
-        img_val=$(grep -E '^FILTR_IMAGE=' .env | cut -d'=' -f2- | tr -d '"' | tr -d "'" || echo "")
-        if [ -n "${img_val}" ]; then
-            cur="${img_val##*:}"
+    local live_img
+    live_img=$(docker inspect --format='{{.Config.Image}}' filtr-app 2>/dev/null || echo "")
+    if [ -n "${live_img}" ]; then
+        cur="${live_img##*:}"
+    fi
+    if [ "${cur}" = "unknown" ] || [ -z "${cur}" ]; then
+        if [ -f .env ]; then
+            local img_val
+            img_val=$(grep -E '^FILTR_IMAGE=' .env | cut -d'=' -f2- | tr -d '"' | tr -d "'" || echo "")
+            if [ -n "${img_val}" ]; then
+                cur="${img_val##*:}"
+            fi
         fi
     fi
     if [ "${cur}" = "unknown" ] || [ -z "${cur}" ]; then
@@ -640,6 +750,30 @@ while [ $# -gt 0 ]; do
         -l|--list|--versions)
             ACTION="list"
             shift
+            ;;
+        --enable-ner)
+            if [ -f "./manage-ner.sh" ]; then
+                exec ./manage-ner.sh enable
+            elif [ -f "${SCRIPT_DIR}/manage-ner.sh" ]; then
+                exec "${SCRIPT_DIR}/manage-ner.sh" enable
+            else
+                echo "manage-ner.sh not found." >&2
+                exit 1
+            fi
+            ;;
+        --disable-ner)
+            if [ -f "./manage-ner.sh" ]; then
+                exec ./manage-ner.sh disable
+            elif [ -f "${SCRIPT_DIR}/manage-ner.sh" ]; then
+                exec "${SCRIPT_DIR}/manage-ner.sh" disable
+            fi
+            ;;
+        --status-ner)
+            if [ -f "./manage-ner.sh" ]; then
+                exec ./manage-ner.sh status
+            elif [ -f "${SCRIPT_DIR}/manage-ner.sh" ]; then
+                exec "${SCRIPT_DIR}/manage-ner.sh" status
+            fi
             ;;
         -y|--yes)
             AUTO_CONFIRM=true
@@ -705,7 +839,7 @@ if [ -z "${TARGET_VERSION}" ]; then
         2)
             echo ""
             list_available_versions || true
-            read -rp "Enter desired version tag (e.g., v1.2.0, v1.3.0, latest): " USER_TAG
+            read -rp "Enter desired version tag (e.g., v1.2.0, v1.4.0, latest): " USER_TAG
             if [ -z "${USER_TAG}" ]; then
                 warn "No version entered. Operation cancelled."
                 exit 0
@@ -778,19 +912,38 @@ info "Step 1/3: Acquiring container image for ${TARGET_VERSION}..."
 
 IMAGE_LOADED=false
 
-# Check for local offline tar archive in directory or /tmp
-OFFLINE_TAR_LOCAL="./filtr-docker-${TARGET_VERSION}.tar.gz"
-OFFLINE_TAR_TMP="/tmp/filtr-docker-${TARGET_VERSION}.tar.gz"
-
-if [ -f "${OFFLINE_TAR_LOCAL}" ]; then
-    info "Found local offline container package: ${OFFLINE_TAR_LOCAL}"
-    docker load < "${OFFLINE_TAR_LOCAL}"
-    IMAGE_LOADED=true
-elif [ -f "${OFFLINE_TAR_TMP}" ]; then
-    info "Found cached container package: ${OFFLINE_TAR_TMP}"
-    docker load < "${OFFLINE_TAR_TMP}"
+# Check if image is already loaded in local Docker daemon
+if docker image inspect "${TARGET_IMAGE}" >/dev/null 2>&1 || \
+   docker image inspect "${LOCAL_IMAGE}" >/dev/null 2>&1 || \
+   docker image inspect "ghcr.io/anandprabhusk/filtr:${TARGET_VERSION}" >/dev/null 2>&1; then
+    docker tag "ghcr.io/anandprabhusk/filtr:${TARGET_VERSION}" "${TARGET_IMAGE}" 2>/dev/null || true
+    info "Found target container image already present in local Docker daemon (${TARGET_IMAGE})."
+    docker tag "${LOCAL_IMAGE}" "${TARGET_IMAGE}" 2>/dev/null || true
+    docker tag "${TARGET_IMAGE}" "${LOCAL_IMAGE}" 2>/dev/null || true
     IMAGE_LOADED=true
 fi
+
+# Check for local offline tar archive in directory, releases/ or /tmp
+if [ "${IMAGE_LOADED}" = false ]; then
+    CANDIDATE_TARS=(
+        "${SCRIPT_DIR}/filtr-docker-${TARGET_VERSION}.tar.gz"
+        "./filtr-docker-${TARGET_VERSION}.tar.gz"
+        "${SCRIPT_DIR}/releases/filtr-docker-${TARGET_VERSION}.tar.gz"
+        "./releases/filtr-docker-${TARGET_VERSION}.tar.gz"
+        "/tmp/filtr-docker-${TARGET_VERSION}.tar.gz"
+    )
+    for tar_file in "${CANDIDATE_TARS[@]}"; do
+        if [ -f "${tar_file}" ]; then
+            info "Found local offline container package: ${tar_file}"
+            docker load < "${tar_file}"
+            docker tag "${LOCAL_IMAGE}" "${TARGET_IMAGE}" 2>/dev/null || true
+            docker tag "${TARGET_IMAGE}" "${LOCAL_IMAGE}" 2>/dev/null || true
+            IMAGE_LOADED=true
+            break
+        fi
+    done
+fi
+
 
 # Try pulling from GHCR
 if [ "${IMAGE_LOADED}" = false ]; then
@@ -812,29 +965,92 @@ if [ "${IMAGE_LOADED}" = false ]; then
     
     DOWNLOAD_OK=false
     if command -v curl >/dev/null 2>&1; then
-        if curl -fSL --progress-bar -o "${TAR_PATH}" "${PACKAGE_URL}"; then
+        if curl -fSL --http1.1 --connect-timeout 20 --retry 5 --retry-delay 2 --retry-connrefused -C - --progress-bar -o "${TAR_PATH}" "${PACKAGE_URL}"; then
             DOWNLOAD_OK=true
         fi
-    elif command -v wget >/dev/null 2>&1; then
-        if wget -q --show-progress -O "${TAR_PATH}" "${PACKAGE_URL}"; then
+    fi
+    if [ "${DOWNLOAD_OK}" = false ] && command -v wget >/dev/null 2>&1; then
+        info "Retrying download with wget..."
+        if wget -c -t 5 --waitretry=2 --timeout=20 --show-progress -O "${TAR_PATH}" "${PACKAGE_URL}"; then
             DOWNLOAD_OK=true
         fi
     fi
 
     if [ "${DOWNLOAD_OK}" = true ] && [ -s "${TAR_PATH}" ]; then
         docker load < "${TAR_PATH}"
+        # Permanently link local and GHCR image tags to prevent pull failures
+        docker tag "${LOCAL_IMAGE}" "${TARGET_IMAGE}" 2>/dev/null || true
+        docker tag "${TARGET_IMAGE}" "${LOCAL_IMAGE}" 2>/dev/null || true
         rm -f "${TAR_PATH}"
         success "Successfully loaded release container image."
         IMAGE_LOADED=true
     else
         rm -f "${TAR_PATH}"
-        error "Failed to download image package for ${TARGET_VERSION}."
-        error "Verify version tag with: ./upgrade.sh --list"
+        error "Failed to acquire container image for ${TARGET_VERSION}."
+        error "GitHub download failed (offline or network reset), and image was not found locally."
+        echo ""
+        info "To deploy offline or rebuild locally:"
+        info "  1) Rebuild locally:  docker build -t ${TARGET_IMAGE} -t ${LOCAL_IMAGE} ."
+        info "  2) Or place offline tar package into ${SCRIPT_DIR}/filtr-docker-${TARGET_VERSION}.tar.gz"
+        info "Then re-run: ./upgrade.sh -v ${TARGET_VERSION} -y"
         exit 1
     fi
 fi
 
+# Check if AI / NER Presidio configuration exists in .env; if missing, prompt interactively
+if [ -f .env ] && ! grep -q '^PRESIDIO_ENABLED=' .env && [ "${AUTO_CONFIRM:-false}" = false ] && [ -t 0 ]; then
+    echo
+    echo -e "${BOLD}--- AI / Deep NER Detection Engine (Microsoft Presidio) ---${NC}"
+    echo -e "${GRAY}Provides advanced ML/NER recognition for unstructured names and regional entities.${NC}"
+    echo -e "  1) Enable Local Sidecar Container (Allocates ~1GB RAM for local spaCy model)"
+    echo -e "  2) Connect to External / Remote Presidio Server (Runs on separate hardware/VM)"
+    echo -e "  3) Keep Disabled / Skip (Fast regex only; configure later via Admin Portal) [default]"
+    read -rp "Select option [1-3] (default: 3): " UP_NER_CHOICE
+    case "${UP_NER_CHOICE}" in
+        1)
+            cat << 'NER_EOF' >> .env
+
+# Pluggable AI / Deep NER Detection Engine (Microsoft Presidio)
+PRESIDIO_ENABLED=true
+PRESIDIO_MODE=local
+PRESIDIO_URL=http://presidio:5001
+PRESIDIO_CONFIDENCE_THRESHOLD=0.6
+COMPOSE_PROFILES=ner
+NER_EOF
+            export COMPOSE_PROFILES="ner"
+            success "Enabled local Presidio AI/NER sidecar container in .env."
+            ;;
+        2)
+            read -rp "Enter Remote Presidio API URL [default: http://localhost:5001]: " UP_P_URL
+            cat << NER_EOF >> .env
+
+# Pluggable AI / Deep NER Detection Engine (Microsoft Presidio)
+PRESIDIO_ENABLED=true
+PRESIDIO_MODE=remote
+PRESIDIO_URL="${UP_P_URL:-http://localhost:5001}"
+PRESIDIO_CONFIDENCE_THRESHOLD=0.6
+COMPOSE_PROFILES=
+NER_EOF
+            success "Configured remote Presidio server (${UP_P_URL:-http://localhost:5001}) in .env."
+            ;;
+        *)
+            cat << 'NER_EOF' >> .env
+
+# Pluggable AI / Deep NER Detection Engine (Microsoft Presidio)
+PRESIDIO_ENABLED=false
+PRESIDIO_MODE=disabled
+PRESIDIO_URL=http://presidio:5001
+PRESIDIO_CONFIDENCE_THRESHOLD=0.6
+COMPOSE_PROFILES=
+NER_EOF
+            info "AI/NER engine remains disabled in .env (pure regex fast-path)."
+            ;;
+    esac
+fi
+
 info "Step 2/3: Updating environment configuration..."
+export FILTR_IMAGE="${TARGET_IMAGE}"
+
 if [ -f .env ]; then
     if grep -q '^FILTR_IMAGE=' .env; then
         sed -i "s|^FILTR_IMAGE=.*|FILTR_IMAGE=${TARGET_IMAGE}|g" .env
@@ -842,21 +1058,122 @@ if [ -f .env ]; then
         echo "FILTR_IMAGE=${TARGET_IMAGE}" >> .env
     fi
     success "Updated FILTR_IMAGE in .env to ${TARGET_IMAGE}"
+else
+    cat << EOF > .env
+PORT=${CURRENT_PORT}
+FILTR_IMAGE=${TARGET_IMAGE}
+EOF
+    success "Created .env with FILTR_IMAGE=${TARGET_IMAGE}"
 fi
 
-info "Step 3/3: Applying rolling container restart with zero-downtime..."
-${COMPOSE_CMD} up -d --force-recreate
 
-info "Verifying service availability..."
+# Step 2.5: Synchronize enterprise rules JSON packs as part of product deployment
+info "Ensuring official enterprise detection rule packs are present..."
+mkdir -p ./rules
+# Synchronize manage-ner.sh into deployment directory
+if [ -f "${SCRIPT_DIR}/manage-ner.sh" ]; then
+    if [ "${SCRIPT_DIR}" != "$(pwd)" ]; then
+        cp -f "${SCRIPT_DIR}/manage-ner.sh" ./manage-ner.sh 2>/dev/null || true
+    fi
+    chmod +x ./manage-ner.sh 2>/dev/null || true
+fi
+
+
+for json_pack in ./rules/filtr_export_*.json ./filtr_export_*.json ./public/filtr_export_*.json; do
+    [ -f "$json_pack" ] && cp -f "$json_pack" ./rules/ 2>/dev/null || true
+
+done
+
+    # Automated verification and healing of mounted nginx.conf for API routing
+    if [ -f "nginx.conf" ]; then
+        if ! grep -q 'location \^\~ /api' nginx.conf && ! grep -q 'location /api' nginx.conf; then
+            info "Detected mounted custom nginx.conf missing /api reverse proxy routing. Auto-patching..."
+            sed -i '/error_page 405 =200/d' nginx.conf
+            sed -i '/location \/assets\/ {/i \        # Reverse proxy REST API requests to internal Filtr SQLite API server\n        location ^~ /api {\n            proxy_pass http://127.0.0.1:3000;\n            proxy_http_version 1.1;\n            proxy_set_header Host $host;\n            proxy_set_header X-Real-IP $remote_addr;\n            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n            proxy_set_header X-Forwarded-Proto $scheme;\n            proxy_connect_timeout 10s;\n            proxy_read_timeout 60s;\n            proxy_intercept_errors off;\n            add_header Cache-Control "no-store, no-cache, must-revalidate" always;\n            add_header X-Content-Type-Options "nosniff" always;\n        }\n' nginx.conf
+            success "Mounted nginx.conf successfully patched with /api API reverse proxy."
+        fi
+    fi
+
+# Export COMPOSE_PROFILES from .env if present
+if [ -f .env ]; then
+    P_PROF=$(grep -E '^COMPOSE_PROFILES=' .env | cut -d'=' -f2- | tr -d '"' | tr -d "'" || echo "")
+    if [ -n "${P_PROF}" ]; then
+        export COMPOSE_PROFILES="${P_PROF}"
+        info "Active container profile(s): ${COMPOSE_PROFILES}"
+    fi
+fi
+
+# Step 2.6: Pre-upgrade automated database & custom rules backup
+info "Backing up persistent SQLite database and custom detection rules..."
+mkdir -p ./data ./rules
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'filtr-app'; then
+    BACKUP_TS="$(date +%Y%m%d_%H%M%S)"
+    docker cp filtr-app:/data/filtr.db "./data/filtr-backup-${BACKUP_TS}.db" 2>/dev/null || true
+    docker cp filtr-app:/data/filtr.db ./data/filtr.db 2>/dev/null || true
+    docker cp filtr-app:/data/custom_rules.json ./rules/custom_rules_backup.json 2>/dev/null || true
+    success "Preserved pre-upgrade database backup (filtr-backup-${BACKUP_TS}.db) and custom rules."
+fi
+
+# Ensure docker-compose.yml has persistent volume for /data
+if [ -f "docker-compose.yml" ]; then
+    if ! grep -q 'filtr-data:/data' docker-compose.yml; then
+        info "Healing docker-compose.yml: ensuring persistent filtr-data:/data volume is mounted..."
+        # If volumes section under filtr doesn't exist, insert it
+        if grep -q 'container_name: filtr-app' docker-compose.yml; then
+            sed -i '/container_name: filtr-app/a \    volumes:\n      - filtr-data:/data' docker-compose.yml
+        fi
+        if ! grep -q '^volumes:' docker-compose.yml; then
+            cat << 'V_EOF' >> docker-compose.yml
+
+volumes:
+  filtr-data:
+    name: filtr-data
+V_EOF
+        fi
+        success "docker-compose.yml patched with persistent filtr-data volume."
+    fi
+fi
+
+info "Step 3/3: Applying rolling container restart with zero-downtime..." 
+# Ensure both tags exist in local daemon prior to starting compose
+docker tag "${LOCAL_IMAGE}" "${TARGET_IMAGE}" 2>/dev/null || true
+docker tag "${TARGET_IMAGE}" "${LOCAL_IMAGE}" 2>/dev/null || true
+
+export FILTR_IMAGE="${TARGET_IMAGE}"
+
+# Prioritize local loaded image without triggering remote pull failure
+if ! FILTR_IMAGE="${TARGET_IMAGE}" ${COMPOSE_CMD} up -d --force-recreate --no-build --pull never 2>/dev/null; then
+    FILTR_IMAGE="${TARGET_IMAGE}" ${COMPOSE_CMD} up -d --force-recreate --no-build
+fi
+
+# Ensure running container has transitioned to the target image
+RUNNING_IMAGE="$(docker inspect --format='{{.Config.Image}}' filtr-app 2>/dev/null || echo "")"
+if [ -n "${RUNNING_IMAGE}" ] && [ "${RUNNING_IMAGE}" != "${TARGET_IMAGE}" ] && [ "${RUNNING_IMAGE}" != "${LOCAL_IMAGE}" ]; then
+    warn "Detected running container filtr-app still on ${RUNNING_IMAGE}. Forcing clean container recreation..."
+    docker stop filtr-app >/dev/null 2>&1 || true
+    docker rm filtr-app >/dev/null 2>&1 || true
+    FILTR_IMAGE="${TARGET_IMAGE}" ${COMPOSE_CMD} up -d --force-recreate --no-build
+fi
+
+info "Verifying service availability and running container image..."
 MAX_RETRIES=15
 COUNTER=0
 HEALTHY=false
+IMAGE_VERIFIED=false
+FINAL_RUNNING_IMAGE=""
 
 while [ $COUNTER -lt $MAX_RETRIES ]; do
-    if curl -s -f "http://127.0.0.1:${CURRENT_PORT}/healthz" >/dev/null 2>&1 || \
-       curl -s -f "http://127.0.0.1:${CURRENT_PORT}/" >/dev/null 2>&1; then
-        HEALTHY=true
-        break
+    FINAL_RUNNING_IMAGE="$(docker inspect --format='{{.Config.Image}}' filtr-app 2>/dev/null || echo "")"
+    if [ "${FINAL_RUNNING_IMAGE}" = "${TARGET_IMAGE}" ] || [ "${FINAL_RUNNING_IMAGE}" = "${LOCAL_IMAGE}" ]; then
+        IMAGE_VERIFIED=true
+    fi
+
+    if [ "${IMAGE_VERIFIED}" = true ]; then
+        if curl -s -f "http://127.0.0.1:${CURRENT_PORT}/healthz" >/dev/null 2>&1 || \
+           curl -s -f "http://127.0.0.1:${CURRENT_PORT}/" >/dev/null 2>&1; then
+            HEALTHY=true
+            break
+        fi
     fi
     sleep 1
     COUNTER=$((COUNTER + 1))
@@ -864,17 +1181,20 @@ done
 
 echo ""
 echo "=========================================================="
-if [ "$HEALTHY" = true ]; then
+if [ "$HEALTHY" = true ] && [ "$IMAGE_VERIFIED" = true ]; then
     if [ "${IS_ROLLBACK}" = true ]; then
         success "${APP_NAME} stack successfully ROLLED BACK to ${TARGET_VERSION}!"
     else
         success "${APP_NAME} stack successfully updated to ${TARGET_VERSION}!"
     fi
     echo -e "  Port:      ${BOLD}${CURRENT_PORT}${NC}"
-    echo -e "  Image:     ${BOLD}${TARGET_IMAGE}${NC}"
+    echo -e "  Image:     ${BOLD}${FINAL_RUNNING_IMAGE}${NC}"
     echo -e "  Status:    ${GREEN}Healthy (Listening and Active)${NC}"
+elif [ "$IMAGE_VERIFIED" = false ]; then
+    error "Upgrade verification failed: Running container filtr-app is on '${FINAL_RUNNING_IMAGE:-unknown}', expected '${TARGET_IMAGE}'"
+    warn "Remediate manually: docker stop filtr-app && docker rm filtr-app && FILTR_IMAGE=${TARGET_IMAGE} ${COMPOSE_CMD} up -d --force-recreate"
 else
-    warn "Deployment command succeeded, but health verification timed out."
+    warn "Container recreated with ${TARGET_IMAGE}, but health verification timed out."
     warn "Inspect container status and logs with: ${COMPOSE_CMD} logs"
 fi
 echo "=========================================================="
@@ -1026,6 +1346,21 @@ http {
             add_header Cache-Control "no-store, no-cache, must-revalidate" always;
         }
 
+        # Reverse proxy REST API requests to internal Filtr SQLite API server
+        location ^~ /api {
+            proxy_pass http://127.0.0.1:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 60s;
+            proxy_intercept_errors off;
+            add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+            add_header X-Content-Type-Options "nosniff" always;
+        }
+
         location / {
             ${HTTP_ACTION}
         }
@@ -1073,6 +1408,21 @@ http {
             alias /etc/nginx/ssl/ssl-info.json;
             default_type application/json;
             add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+        }
+
+        # Reverse proxy REST API requests to internal Filtr SQLite API server
+        location ^~ /api {
+            proxy_pass http://127.0.0.1:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 60s;
+            proxy_intercept_errors off;
+            add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+            add_header X-Content-Type-Options "nosniff" always;
         }
 
         location /assets/ {
@@ -1163,16 +1513,25 @@ if [ "${IMAGE_READY}" = false ]; then
     else
         info "GHCR direct pull not available. Downloading release package archive..."
         TAR_PATH="/tmp/filtr-docker-${VERSION}.tar.gz"
+        DL_OK=false
         if command -v curl >/dev/null 2>&1; then
-            curl -fSL --progress-bar -o "${TAR_PATH}" "${PACKAGE_URL}"
-        elif command -v wget >/dev/null 2>&1; then
-            wget -q --show-progress -O "${TAR_PATH}" "${PACKAGE_URL}"
-        else
-            error "Neither curl nor wget is available."
+            if curl -fSL --http1.1 --connect-timeout 20 --retry 5 --retry-delay 2 --retry-connrefused -C - --progress-bar -o "${TAR_PATH}" "${PACKAGE_URL}"; then
+                DL_OK=true
+            fi
+        fi
+        if [ "${DL_OK}" = false ] && command -v wget >/dev/null 2>&1; then
+            if wget -c -t 5 --waitretry=2 --timeout=20 --show-progress -O "${TAR_PATH}" "${PACKAGE_URL}"; then
+                DL_OK=true
+            fi
+        fi
+        if [ "${DL_OK}" = false ]; then
+            error "Neither curl nor wget could complete downloading ${PACKAGE_URL}."
             exit 1
         fi
         info "Loading container package into Docker daemon..."
         docker load < "${TAR_PATH}"
+        docker tag "${LOCAL_TAG}" "${IMAGE_TAG}" 2>/dev/null || true
+        docker tag "${IMAGE_TAG}" "${LOCAL_TAG}" 2>/dev/null || true
         rm -f "${TAR_PATH}"
         success "Container image successfully loaded into Docker."
         IMAGE_READY=true
@@ -1191,7 +1550,17 @@ if docker ps -a --format '{{.Names}}' | grep -Eq "^filtr-app$"; then
     docker rm filtr-app >/dev/null 2>&1 || true
 fi
 
-${COMPOSE_CMD} up -d --remove-orphans
+export FILTR_IMAGE="${IMAGE_TAG}"
+FILTR_IMAGE="${IMAGE_TAG}" ${COMPOSE_CMD} up -d --remove-orphans --force-recreate
+
+# Ensure running container is running the correct image
+RUNNING_IMAGE="$(docker inspect --format='{{.Config.Image}}' filtr-app 2>/dev/null || echo "")"
+if [ -n "${RUNNING_IMAGE}" ] && [ "${RUNNING_IMAGE}" != "${IMAGE_TAG}" ] && [ "${RUNNING_IMAGE}" != "${LOCAL_TAG}" ]; then
+    warn "Detected container filtr-app still on ${RUNNING_IMAGE}. Forcing clean restart..."
+    docker stop filtr-app >/dev/null 2>&1 || true
+    docker rm filtr-app >/dev/null 2>&1 || true
+    FILTR_IMAGE="${IMAGE_TAG}" ${COMPOSE_CMD} up -d --remove-orphans --force-recreate
+fi
 
 # -----------------------------------------------------------------------------
 # 8. Systemd Service Integration (Optional)
@@ -1272,6 +1641,10 @@ echo "=========================================================="
 echo
 echo -e "  ${BOLD}Installation Path:${NC} ${GREEN}${INSTALL_DIR}${NC}"
 echo -e "  ${BOLD}Container Name:${NC}    filtr-app"
+echo
+echo -e "  ${BOLD}Administrative Security Credentials:${NC}"
+echo -e "  • Admin Passkey:   ${GREEN}${BOLD}${ADMIN_PASSKEY}${NC}"
+echo -e "  • Master Token:    ${GREEN}${BOLD}${ADMIN_PASSKEY}${NC}"
 echo
 echo -e "  ${BOLD}Access Endpoints:${NC}"
 if [ "${ENABLE_SSL}" = true ]; then

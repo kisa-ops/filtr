@@ -1,8 +1,8 @@
 {
-  "version": "1.8.3-enterprise",
-  "updatedAt": "2026-09-13T17:55:23.725Z",
+  "version": "2.0.4-enterprise",
+  "updatedAt": "2026-09-24T06:20:12Z",
   "organization": "Enterprise Security Operations",
-  "policyChecksum": "sha256-6b6b80c8f7240c897507a978d718e8975e6dfd1b8f6de785c28b0486aa3c0dac",
+  "policyChecksum": "sha256-3d6bb540c5a97ecabe9715627a379464df4b680333a6f2000848d522067bfd35",
   "defaultPolicy": "pci",
   "enabledModules": {
     "text": true,
@@ -144,24 +144,30 @@
     {
       "id": "aws_access_key",
       "name": "AWS Access Key ID",
-      "pattern": "\\b(A[SK]IA[0-9A-Z]{16})\\b",
       "category": "cloud",
-      "severity": "critical",
+      "description": "Matches standard 20-character AWS Access Key IDs starting with AKIA or ASIA",
+      "pattern": "\\b(A[SK]IA[0-9A-Z]{16})\\b",
       "replacementTemplate": "[AWS_KEY_{INDEX}]",
-      "isCustom": false,
       "enabled": true,
-      "description": "Matches standard 20-character AWS Access Key IDs starting with AKIA or ASIA"
+      "severity": "critical",
+      "examples": [
+        "AKIAIOSFODNN7EXAMPLE",
+        "ASIAIOSFODNN7EXAMPLE"
+      ]
     },
     {
       "id": "aws_secret_key",
       "name": "AWS Secret Access Key",
-      "pattern": "(?:aws_secret_access_key|aws_secret|secret_key)[\\s]*[=:][\\s]*[\"']?([a-zA-Z0-9/+=]{40})[\"']?",
       "category": "cloud",
-      "severity": "critical",
+      "description": "Detects 40-character AWS Secret Keys in key-value pairs",
+      "pattern": "\\b(?:aws_secret_access_key|aws_secret|secret_key)[\\s]*[=:][\\s]*[\"']?([a-zA-Z0-9/+=]{40})[\"']?",
+      "flags": "i",
       "replacementTemplate": "[AWS_SECRET_{INDEX}]",
-      "isCustom": false,
       "enabled": true,
-      "description": "Detects 40-character AWS Secret Keys in key-value pairs"
+      "severity": "critical",
+      "examples": [
+        "aws_secret_access_key = \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\""
+      ]
     },
     {
       "id": "basic_auth_url",
@@ -1187,7 +1193,7 @@
     {
       "id": "fin_swift_bic",
       "name": "SWIFT / BIC Bank Identifier Code",
-      "pattern": "\\b[A-Z]{6}[A-Z2-9][A-NP-Z0-9](?:[A-Z0-9]{3})?\\b",
+      "pattern": "\\b(?:swift|bic|bank[_-]?code|routing)[\\s:=]+([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\\b|(?<=\\bBIC[:\\s])([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\\b",
       "category": "financial",
       "severity": "critical",
       "replacementTemplate": "[SWIFT_BIC_{INDEX}]",
@@ -1199,7 +1205,8 @@
         "DEUTDEFF",
         "BARCGB22",
         "BNPAFRPPXXX"
-      ]
+      ],
+      "flags": "i"
     },
     {
       "id": "fin_uk_bank_account",
@@ -1487,13 +1494,15 @@
     {
       "id": "google_api_key",
       "name": "Google Cloud / Maps API Key",
-      "pattern": "\\b(AIza[0-9A-Za-z\\-_]{35})\\b",
       "category": "cloud",
-      "severity": "critical",
+      "description": "Matches standard 39-character Google Cloud and Firebase API Keys starting with AIza",
+      "pattern": "\\b(AIza[0-9A-Za-z\\-_]{35})\\b",
       "replacementTemplate": "[GOOGLE_API_KEY_{INDEX}]",
-      "isCustom": false,
       "enabled": true,
-      "description": "Matches standard 39-character Google Cloud and Firebase API Keys starting with AIza"
+      "severity": "critical",
+      "examples": [
+        "AIzaSyA1b2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q"
+      ]
     },
     {
       "id": "health_insurance_claim",
@@ -2518,13 +2527,12 @@
     {
       "id": "oci_api_key_fingerprint",
       "name": "Oracle Cloud API Signing Key Fingerprint",
-      "pattern": "(?:fingerprint\\s*[=:]\\s*[\"']?|\\b)([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){15})\\b",
       "category": "cloud",
-      "severity": "critical",
-      "replacementTemplate": "[OCI_FINGERPRINT_{INDEX}]",
-      "isCustom": false,
-      "enabled": true,
       "description": "Detects 16-pair hex API signing key fingerprints used in OCI CLI and SDK configuration profiles",
+      "pattern": "(?:fingerprint\\s*[=:]\\s*[\"']?|\\b)([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){15})\\b",
+      "replacementTemplate": "[OCI_FINGERPRINT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
       "examples": [
         "20:3b:97:13:55:1c:5b:0d:d3:37:d8:50:4e:c5:42:e7"
       ]
@@ -2532,13 +2540,12 @@
     {
       "id": "oci_auth_token",
       "name": "Oracle Cloud Auth Token / Swift Secret",
-      "pattern": "(?:auth_token|oci_token|swift_password|oci_auth)\\s*[=:]\\s*[\"']?([A-Za-z0-9/+=_~-]{16,64})[\"']?",
       "category": "cloud",
-      "severity": "critical",
-      "replacementTemplate": "[OCI_AUTH_TOKEN_{INDEX}]",
-      "isCustom": false,
-      "enabled": true,
       "description": "Matches OCI user auth tokens and Swift object storage credentials",
+      "pattern": "\\b(?:auth_token|oci_token|swift_password|oci_auth)[\\s]*[=:][\\s]*[\"']?([A-Za-z0-9/+=_~$%!@.-]{16,64})[\"']?",
+      "replacementTemplate": "[OCI_AUTH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
       "examples": [
         "auth_token = \"K=d89$bNqW_exampleToken\""
       ]
@@ -2546,13 +2553,12 @@
     {
       "id": "oci_ocid",
       "name": "Oracle Cloud OCID (User, Tenancy, Instance, Key)",
-      "pattern": "\\bocid1\\.[a-z0-9-]+\\.[a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.[a-z0-9]{20,}\\b",
       "category": "cloud",
-      "severity": "critical",
-      "replacementTemplate": "[OCI_OCID_{INDEX}]",
-      "isCustom": false,
-      "enabled": true,
       "description": "Matches Oracle Cloud Infrastructure resource identifiers (OCIDs) for Users, Tenancies, Compartments, and Instances",
+      "pattern": "\\bocid1\\.[a-z0-9-]+\\.[a-z0-9-]*(?:\\.[a-z0-9-]*)*\\.[a-z0-9]{20,}\\b",
+      "replacementTemplate": "[OCI_OCID_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
       "examples": [
         "ocid1.user.oc1..aaaaaaaaxampleuser1234567890abcdef",
         "ocid1.tenancy.oc1..aaaaaaaatemp1234567890abcdef"
@@ -4099,21 +4105,6 @@
       "description": "Detects Stripe API keys starting with sk_live_ or rk_live_"
     },
     {
-      "id": "swift_bic_code",
-      "name": "SWIFT / BIC Banking Code",
-      "pattern": "\\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b",
-      "category": "financial",
-      "severity": "medium",
-      "replacementTemplate": "[SWIFT_BIC_{INDEX}]",
-      "isCustom": false,
-      "enabled": true,
-      "description": "Matches 8 or 11-character global bank identifier codes (SWIFT/BIC)",
-      "examples": [
-        "CHASUS33",
-        "DEUTDEDBFXX"
-      ]
-    },
-    {
       "id": "tomcat_jmx_password",
       "name": "Apache Tomcat JMX Remote Auth Password",
       "pattern": "\\b(?:monitorRole|controlRole)\\s+([^\\s\\r\\n#]{4,})",
@@ -4196,6 +4187,693 @@
         "QQ123456C",
         "AB123456Z"
       ]
+    },
+    {
+      "id": "huggingface_token",
+      "name": "Hugging Face Access Token",
+      "category": "cloud",
+      "description": "Matches Hugging Face user access and API tokens (hf_...)",
+      "pattern": "\\bhf_[a-zA-Z0-9]{34,37}\\b",
+      "replacementTemplate": "[HUGGINGFACE_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "hf_aBcDeFgHiJkLmNoPqRsTuVwXyZ01234567"
+      ]
+    },
+    {
+      "id": "cohere_api_key",
+      "name": "Cohere AI API Key",
+      "category": "cloud",
+      "description": "Matches 40-character Cohere AI platform API tokens",
+      "pattern": "(?:cohere[_-]?api[_-]?key|cohere[_-]?token)[\\s]*[=:][\\s]*[\"']?([a-zA-Z0-9]{40})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[COHERE_KEY_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "cohere_api_key = \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0\""
+      ]
+    },
+    {
+      "id": "vault_token",
+      "name": "HashiCorp Vault Token",
+      "category": "cloud",
+      "description": "Matches HashiCorp Vault Service and Batch tokens (hvs...., s....)",
+      "pattern": "\\b(?:hvs|s)\\.[a-zA-Z0-9_-]{24,36}\\b",
+      "replacementTemplate": "[VAULT_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "hvs.CAESIJ1234567890abcdefghijklmn",
+        "s.7Z2g1234567890abcdefghijklmn"
+      ]
+    },
+    {
+      "id": "docker_hub_token",
+      "name": "Docker Hub Personal Access Token",
+      "category": "cloud",
+      "description": "Matches Docker Hub Personal Access Tokens starting with dckr_pat_",
+      "pattern": "\\bdckr_pat_[a-zA-Z0-9_-]{27,35}\\b",
+      "replacementTemplate": "[DOCKER_HUB_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "dckr_pat_abcdefghijklmnopqrstuvwxyz12"
+      ]
+    },
+    {
+      "id": "terraform_cloud_token",
+      "name": "Terraform Cloud API Token",
+      "category": "cloud",
+      "description": "Detects Terraform Cloud and Enterprise user and team API tokens",
+      "pattern": "\\b[a-zA-Z0-9]{14}\\.atlasv1\\.[a-zA-Z0-9]{60,70}\\b",
+      "replacementTemplate": "[TERRAFORM_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "abcdefghijklmn.atlasv1.abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz12"
+      ]
+    },
+    {
+      "id": "kubernetes_service_account",
+      "name": "Kubernetes ServiceAccount JWT",
+      "category": "cloud",
+      "description": "Detects Kubernetes service account tokens issued by kube-apiserver",
+      "pattern": "(?:serviceaccount|service_account|k8s)[\\s]*[:=][\\s]*[\"']?(eyJhbGciOiJSUzI1NiIs[a-zA-Z0-9_\\-\\.\\=]{50,})[\"']?",
+      "replacementTemplate": "[K8S_SERVICE_ACCOUNT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "serviceaccount: eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3QiLCJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50In0.exampleTokenHere1234567890"
+      ]
+    },
+    {
+      "id": "crypto_ethereum_wallet",
+      "name": "Ethereum & EVM Wallet Address",
+      "category": "financial",
+      "description": "Matches 42-character Ethereum and EVM-compatible cryptocurrency wallet addresses",
+      "pattern": "\\b0x[a-fA-F0-9]{40}\\b",
+      "replacementTemplate": "[ETH_WALLET_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+        "0x00000000219ab540356cbb839cbe05303d7705fa"
+      ]
+    },
+    {
+      "id": "crypto_bitcoin_wallet",
+      "name": "Bitcoin Wallet Address",
+      "category": "financial",
+      "description": "Detects Bitcoin wallet addresses (Legacy P2PKH/P2SH and SegWit Bech32)",
+      "pattern": "\\b(?:(?:1|3)[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})\\b",
+      "replacementTemplate": "[BTC_WALLET_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+        "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      ]
+    },
+    {
+      "id": "australian_tfn",
+      "name": "Australian Tax File Number (TFN)",
+      "category": "pii",
+      "description": "Matches 8 or 9-digit Australian Tax File Numbers",
+      "pattern": "\\b[0-9]{3}[-\\s]?[0-9]{3}[-\\s]?[0-9]{3}\\b",
+      "replacementTemplate": "[AUSTRALIA_TFN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "123 456 789",
+        "987-654-321"
+      ]
+    },
+    {
+      "id": "french_insee_nir",
+      "name": "French National Identification (INSEE / NIR)",
+      "category": "pii",
+      "description": "Matches 13 or 15-digit French social security numbers (NIR/INSEE)",
+      "pattern": "\\b[12][0-9]{2}(?:0[1-9]|1[0-2])[0-9]{2}[0-9]{3}[0-9]{3}(?:[0-9]{2})?\\b",
+      "replacementTemplate": "[FRENCH_INSEE_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "1850575012345",
+        "292027512345678"
+      ]
+    },
+    {
+      "id": "spanish_dni_nie",
+      "name": "Spanish DNI / NIE National Identity Number",
+      "category": "pii",
+      "description": "Matches Spanish Documento Nacional de Identidad (DNI) and Foreigner NIE identifiers",
+      "pattern": "\\b[XYZxyz]?[0-9]{7,8}[A-Za-z]\\b",
+      "replacementTemplate": "[SPANISH_DNI_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "12345678Z",
+        "X1234567L"
+      ]
+    },
+    {
+      "id": "windows_security_sid",
+      "name": "Windows Active Directory Security Identifier (SID)",
+      "category": "credentials",
+      "description": "Matches Windows NT and Active Directory Security Identifiers (SIDs)",
+      "pattern": "\\bS-1-(?:[0-5]|16|21)-[0-9\\-]+\\b",
+      "replacementTemplate": "[WINDOWS_SID_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "S-1-5-21-3623811015-3361044348-30300820-1013",
+        "S-1-5-18"
+      ]
+    },
+    {
+      "id": "password_hash_sha512crypt",
+      "name": "Linux SHA-512 Crypt Password Hash",
+      "category": "credentials",
+      "description": "Matches standard Linux /etc/shadow SHA-512 crypt password hashes starting with $6$",
+      "pattern": "\\$6\\$(?:rounds=[0-9]+\\$)?[a-zA-Z0-9\\.\\/]{1,16}\\$[a-zA-Z0-9\\.\\/]{86}",
+      "replacementTemplate": "[SHA512_CRYPT_HASH_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "$6$saltsalt$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEF"
+      ]
+    },
+    {
+      "id": "password_hash_argon2",
+      "name": "Argon2 Password Hash",
+      "category": "credentials",
+      "description": "Matches modern Argon2id, Argon2i, and Argon2d password hash strings",
+      "pattern": "\\$argon2(?:id?|d)\\$v=[0-9]+\\$m=[0-9]+,t=[0-9]+,p=[0-9]+\\$[a-zA-Z0-9+\\/]+\\$[a-zA-Z0-9+\\/]+",
+      "replacementTemplate": "[ARGON2_HASH_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$9s/8RepBqNT4IFAnAhSfihjaRHigWvFsSmWmArJWjpQ"
+      ]
+    },
+    {
+      "id": "private_rfc1918_ip",
+      "name": "RFC 1918 Private IPv4 Subnet Address",
+      "category": "network",
+      "description": "Matches private RFC 1918 IPv4 addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)",
+      "pattern": "\\b(?:10\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|172\\.(?:1[6-9]|2[0-9]|3[01])\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|192\\.168\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\b",
+      "replacementTemplate": "[PRIVATE_IP_{INDEX}]",
+      "enabled": false,
+      "severity": "medium",
+      "examples": [
+        "10.240.0.1",
+        "172.16.10.5",
+        "192.168.1.100"
+      ]
+    },
+    {
+      "id": "aws_private_ec2_hostname",
+      "name": "AWS Private EC2 Internal Hostname",
+      "category": "network",
+      "description": "Matches private AWS EC2 internal DNS hostnames (ip-10-x-x-x.compute.internal / ec2.internal)",
+      "pattern": "\\bip-(?:10|172-(?:1[6-9]|2[0-9]|3[01])|192-168)(?:-[0-9]+){3}(?:\\.[a-z0-9\\-]+)?\\.(?:compute|ec2)\\.internal\\b",
+      "replacementTemplate": "[AWS_INTERNAL_HOST_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "ip-10-0-1-25.ec2.internal",
+        "ip-172-16-5-10.us-east-1.compute.internal"
+      ]
+    },
+    {
+      "id": "azure_client_id",
+      "name": "Azure Client App ID",
+      "category": "cloud",
+      "description": "Matches Azure Active Directory / Entra ID Application (Client) ID UUIDs in config files and environment variables",
+      "pattern": "\\b(?:azure_client_id|arm_client_id|appId|client_id)\\s*[:=]\\s*[\"']?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AZURE_CLIENT_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "azure_client_id = \"11112222-3333-4444-5555-666677778888\""
+      ]
+    },
+    {
+      "id": "azure_tenant_id",
+      "name": "Azure Tenant Directory ID",
+      "category": "cloud",
+      "description": "Matches Azure Active Directory / Entra ID Directory (Tenant) ID UUIDs in cloud settings",
+      "pattern": "\\b(?:azure_tenant_id|arm_tenant_id|tenant_id)\\s*[:=]\\s*[\"']?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[AZURE_TENANT_ID_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "azure_tenant_id: \"88887777-6666-5555-4444-333322221111\""
+      ]
+    },
+    {
+      "id": "azure_connection_string",
+      "name": "Azure Service Bus / Event Hub Connection String",
+      "category": "cloud",
+      "description": "Detects Azure Service Bus, Event Hub, and Cosmos DB SharedAccessKey connection strings",
+      "pattern": "Endpoint=sb:\\/\\/[a-zA-Z0-9-_]+\\.servicebus\\.windows\\.net\\/;SharedAccessKeyName=[^;\\s\"']+;SharedAccessKey=[a-zA-Z0-9+/=]{40,50}",
+      "flags": "i",
+      "replacementTemplate": "[AZURE_CONNECTION_STRING_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "Endpoint=sb://example-servicebus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abcdefghijklmnopqrstuvwxyz0123456789ABCDEF="
+      ]
+    },
+    {
+      "id": "gcp_oauth_client_secret",
+      "name": "Google Cloud OAuth Client Secret",
+      "category": "cloud",
+      "description": "Detects Google OAuth 2.0 Web and Desktop application client secrets starting with GOCSPX-",
+      "pattern": "\\b(?:gcp_client_secret|google_client_secret|client_secret)\\s*[:=]\\s*[\"']?(GOCSPX-[a-zA-Z0-9_-]{28})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GCP_CLIENT_SECRET_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "gcp_client_secret = \"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\""
+      ]
+    },
+    {
+      "id": "gcp_oauth_token",
+      "name": "Google Cloud OAuth Access Token (ya29)",
+      "category": "cloud",
+      "description": "Matches ephemeral Google Cloud OAuth 2.0 user and service account access tokens starting with ya29",
+      "pattern": "\\bya29\\.[a-zA-Z0-9_-]{80,}\\b",
+      "replacementTemplate": "[GCP_OAUTH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "ya29.a0AWY7Ckkk_exampleTokenHere_abcdefghijklmnopqrstuvwxyz0123456789_abcdefghijklmnopqrstuvwxyz0123456789"
+      ]
+    },
+    {
+      "id": "gcp_oauth_refresh_token",
+      "name": "Google Cloud OAuth 2.0 Refresh Token",
+      "category": "cloud",
+      "description": "Detects Google OAuth 2.0 persistent refresh tokens starting with 1//",
+      "pattern": "\\b(?:refresh_token|gcp_refresh_token)\\s*[:=]\\s*[\"']?(1\\/\\/[a-zA-Z0-9_-]{40,90})[\"']?",
+      "flags": "i",
+      "replacementTemplate": "[GCP_REFRESH_TOKEN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "refresh_token = \"1//04exampleRefreshToken9876543210abcdefghijklmnopqrstuvwxyz\""
+      ]
+    },
+    {
+      "id": "gcp_service_account_json",
+      "name": "Google Cloud Service Account Key JSON",
+      "category": "cloud",
+      "description": "Detects Google Cloud service account JSON credential files and private keys",
+      "pattern": "\"(?:type\":\\s*\"service_account\"[\\s\\S]*?\"private_key\":\\s*\"-----BEGIN PRIVATE KEY-----|(?:project_id\":\\s*\"[a-z0-9-]+\"[\\s\\S]*?\"private_key_id\":\\s*\"[0-9a-fA-F]{40}))",
+      "replacementTemplate": "[GCP_SERVICE_ACCOUNT_JSON_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "{\n  \"type\": \"service_account\",\n  \"project_id\": \"my-project\",\n  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\nMIIEvg..."
+      ]
+    },
+    {
+      "id": "oci_db_connect_string",
+      "name": "Oracle Cloud TNS / Database Connection String",
+      "category": "cloud",
+      "description": "Matches Oracle Cloud Autonomous Database connection strings and TNS credential blocks",
+      "pattern": "(?:jdbc:oracle:thin:@[^\\s\"']+|\\(DESCRIPTION\\s*=\\s*\\(ADDRESS\\s*=\\s*\\(PROTOCOL\\s*=\\s*tcps\\))",
+      "flags": "i",
+      "replacementTemplate": "[OCI_DB_CONNECT_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(PORT=1522)(HOST=adb.us-ashburn-1.oraclecloud.com))(CONNECT_DATA=(SERVICE_NAME=example_high.adb.oraclecloud.com)))"
+      ]
+    },
+    {
+      "id": "gcc_cchi_insurance_number",
+      "name": "Saudi Arabia CCHI Health Insurance Policy Number",
+      "category": "phi",
+      "severity": "critical",
+      "pattern": "\\b(?:cchi(?:[_\\s]*(?:num|policy|id))?)\\s*[:=#\\-]?\\s*([A-Z0-9]{7,15})\\b|\\bCCHI[-_][A-Z0-9]{5,12}\\b",
+      "flags": "i",
+      "replacementTemplate": "[CCHI_INSURANCE_ID]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Detects Saudi Council of Cooperative Health Insurance (CCHI) policy and member numbers.",
+      "examples": [
+        "CCHI_NUM: SA889201934",
+        "cchi_policy=98234112",
+        "CCHI-9923841"
+      ]
+    },
+    {
+      "id": "gcc_uae_health_insurance_id",
+      "name": "UAE Health Insurance Member ID (Daman / Thiqa / Enaya / Saada)",
+      "category": "phi",
+      "severity": "critical",
+      "pattern": "\\b(?:daman|thiqa|enaya|saada|dha[_-]?ins|nas[_-]?ins|mednet)\\s*(?:id|member|card|policy|no)?\\s*[:=#\\-]?\\s*([A-Z0-9]{6,16})\\b|\\b(?:DAMAN|THIQA|ENAYA|DHA)[-_][A-Z0-9]{6,12}\\b",
+      "flags": "i",
+      "replacementTemplate": "[UAE_HEALTH_INS_ID]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Matches health insurance card and member IDs from major UAE insurers (Daman, Thiqa, Enaya, Saada, DHA, NAS, Mednet).",
+      "examples": [
+        "daman_card_no: 9948210384",
+        "THIQA-8823102",
+        "enaya_member=EN902341"
+      ]
+    },
+    {
+      "id": "gcc_insurance_claim_number",
+      "name": "Middle East Insurance Claim Reference Number",
+      "category": "financial",
+      "severity": "critical",
+      "pattern": "\\b(?:claim(?:[_\\s]*(?:#|ref|no|num|number))?)\\s*[:=#\\-]?\\s*([A-Z0-9]{2,6}(?:[-_][0-9A-Z]{3,8}){1,2}|[0-9]{8,14})\\b",
+      "flags": "i",
+      "replacementTemplate": "[INSURANCE_CLAIM_REF]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Identifies insurance claim tracking and reference numbers used by Middle East insurance providers and TPAs.",
+      "examples": [
+        "claim_ref: CLM-2026-90412",
+        "claim_no=9988214309",
+        "claim# DXB-88319"
+      ]
+    },
+    {
+      "id": "gcc_unified_number_uid",
+      "name": "UAE Unified Identification Number (UID)",
+      "category": "pii",
+      "severity": "critical",
+      "pattern": "\\b(?:unified(?:[_\\s]*(?:number|no|num|id))?|uid)\\s*[:=#\\-]?\\s*([0-9]{6,9})\\b|\\bUID[-_][0-9]{6,9}\\b",
+      "flags": "i",
+      "replacementTemplate": "[UAE_UID]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Matches UAE Unified Identification Numbers (UID) assigned to residents and used in national insurance indexing.",
+      "examples": [
+        "unified_id: 10928374",
+        "UID: 982341",
+        "UID-8839210"
+      ]
+    },
+    {
+      "id": "person_name_contextual",
+      "name": "Full / First / Last Name Contextual Field",
+      "category": "pii",
+      "severity": "high",
+      "pattern": "\\b(?:full[_-]?name|first[_-]?name|last[_-]?name|patient[_-]?name|insured[_-]?name|beneficiary[_-]?name|claimant[_-]?name|employee[_-]?name|member[_-]?name|client[_-]?name|customer[_-]?name|subscriber[_-]?name|student[_-]?name|passenger[_-]?name|doctor[_-]?name|physician[_-]?name|candidate[_-]?name|contact[_-]?name|name)\\s*[:=]\\s*([A-Z][a-z]+(?:\\s+[A-Z][a-z]+){1,3})\\b",
+      "flags": "i",
+      "replacementTemplate": "[PERSON_NAME]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Detects personal names preceded by explicit form/data field labels (e.g. name:, patient_name:, insured_name:).",
+      "examples": [
+        "patient_name: Mohammed Al Mansoori",
+        "full_name=Fatima Zahra",
+        "insured_name: John Smith"
+      ]
+    },
+    {
+      "id": "person_name_salutation",
+      "name": "Personal Name with Formal Salutation or Middle East Honorific",
+      "category": "pii",
+      "severity": "high",
+      "pattern": "\\b(?:Mr\\.|Mrs\\.|Ms\\.|Miss|Dr\\.|Prof\\.|Eng\\.|Sheikh|Sheikha|Sayyid|Sayyida|H\\.E\\.|H\\.R\\.H\\.)\\s+([A-Z][a-z]+(?:\\s+(?:Al[- ])?[A-Z][a-z]+){1,3})\\b",
+      "flags": "",
+      "replacementTemplate": "[PERSON_NAME]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Matches names following honorifics and professional titles common internationally and across the Middle East (Dr., Eng., Sheikh, etc.).",
+      "examples": [
+        "Dr. Tariq Al Hashimi",
+        "Sheikh Mansoor Al Nahyan",
+        "Eng. Sarah Jenkins",
+        "Mr. David Miller"
+      ]
+    },
+    {
+      "id": "person_name_display_name",
+      "name": "Directory / Identity Display Name (displayName / cn)",
+      "category": "pii",
+      "severity": "high",
+      "pattern": "\\b(?:display[_-]?name|cn|user[_-]?display[_-]?name)\\s*[:=]\\s*['\\\"]?([A-Z][a-z]+(?:\\s+[A-Z][a-z]+){1,3})['\\\"]?",
+      "flags": "i",
+      "replacementTemplate": "[DISPLAY_NAME]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Detects display name attributes commonly populated in LDAP, Active Directory, Azure AD/Entra ID, and OAuth profiles.",
+      "examples": [
+        "displayName: Khalid Al Qasimi",
+        "cn=Zaid Ibrahim",
+        "user_display_name: Emily Watson"
+      ]
+    },
+    {
+      "id": "ad_samaccountname_domain",
+      "name": "Active Directory Down-Level Logon Name (DOMAIN\\Username)",
+      "category": "credentials",
+      "severity": "high",
+      "pattern": "\\b[A-Za-z0-9_\\-\\.]{2,15}\\\\[A-Za-z0-9_\\-\\.]{2,30}\\b",
+      "flags": "",
+      "replacementTemplate": "[AD_DOMAIN_USER]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Detects NetBIOS/Active Directory domain backslash username paths (e.g., ADCORP\\jsmith, CONTOSO\\tariq.a).",
+      "examples": [
+        "CORPAD\\jsmith",
+        "EMIRATES\\khalid.a",
+        "MEINSURE\\claim_svc"
+      ]
+    },
+    {
+      "id": "ad_user_principal_name",
+      "name": "Active Directory User Principal Name (UPN / Internal Corporate Realm)",
+      "category": "credentials",
+      "severity": "high",
+      "pattern": "\\b[a-zA-Z0-9_\\-\\.]{2,30}@(corp|internal|local|lan|priv|intranet|enterprise|domain)\\.[a-zA-Z]{2,6}\\b|\\b[a-zA-Z0-9_\\-\\.]{2,30}@[a-zA-Z0-9_\\-]+\\.(?:local|corp|internal|lan)\\b",
+      "flags": "i",
+      "replacementTemplate": "[AD_UPN_ACCOUNT]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Detects User Principal Names (UPNs) targeting internal Active Directory and private enterprise domain suffixes.",
+      "examples": [
+        "jsmith@corp.contoso.com",
+        "ahmed.k@ad.internal",
+        "svc-deploy@domain.local"
+      ]
+    },
+    {
+      "id": "ad_username_contextual",
+      "name": "Active Directory sAMAccountName / User ID Contextual Field",
+      "category": "credentials",
+      "severity": "high",
+      "pattern": "\\b(?:sAMAccountName|user[_-]?name|user[_-]?id|logon[_-]?name|login[_-]?id|ad[_-]?user|nt[_-]?user)\\s*[:=]\\s*['\\\"]?([a-zA-Z0-9_\\.\\-]{3,25})['\\\"]?",
+      "flags": "i",
+      "replacementTemplate": "[AD_USERNAME]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Matches Active Directory sAMAccountName and corporate login ID assignment fields in configs, LDAP exports, and logs.",
+      "examples": [
+        "sAMAccountName=jsmith",
+        "user_id: malmansoori",
+        "logon_name: t_hashimi"
+      ]
+    },
+    {
+      "id": "corporate_username_standard_formats",
+      "name": "Corporate Username Standard Format (first.last / flast)",
+      "category": "credentials",
+      "severity": "medium",
+      "pattern": "\\b(?:user|account|login|author|owner)\\s*[:=]\\s*([a-z]{1,2}\\.[a-z]{2,20}|[a-z]{2,20}\\.[a-z]{2,20}|[a-z][a-z0-9]{2,15})\\b",
+      "flags": "i",
+      "replacementTemplate": "[CORP_USERNAME]",
+      "isCustom": false,
+      "enabled": true,
+      "description": "Captures universal corporate username conventions (initial.lastname, firstname.lastname, or alphanumeric handles) with key identifier context.",
+      "examples": [
+        "user: j.smith",
+        "account=tariq.mansoor",
+        "login: anand.s"
+      ]
+    },
+    {
+      "id": "generic_api_key_assignment",
+      "name": "Generic API Key / Secret Assignment",
+      "category": "credentials",
+      "severity": "critical",
+      "replacementTemplate": "[API_KEY_{INDEX}]",
+      "pattern": "(?:api[_-]?key|api[_-]?secret|app[_-]?secret|client[_-]?secret|consumer[_-]?secret|app[_-]?key|access[_-]?key|secret[_-]?key|auth[_-]?key|encryption[_-]?key)[\\s]*[=:][\\s]*[\"\\']?([A-Za-z0-9+/=_\\\\-]{16,128})[\"\\']?",
+      "flags": "i",
+      "description": "Detects key=value or key: \"value\" patterns for API keys, secrets, tokens in config files and logs",
+      "examples": [
+        "api_key = \"dGVzdC1rZXktMTIzNDU2Nzg5MDEyMzQ=\"",
+        "CLIENT_SECRET: \"9f8e7d6c5b4a3928170123456789abcd\""
+      ]
+    },
+    {
+      "id": "generic_password_assignment",
+      "name": "Password / Passphrase Assignment in Config / Log",
+      "category": "credentials",
+      "severity": "critical",
+      "replacementTemplate": "[PASSWORD_{INDEX}]",
+      "pattern": "(?:password|passwd|pass|passphrase|db_pass|db_password|admin_pass|user_pass)[\\s]*[=:][\\s]*[\"\\']?([^\\s\"\\',;\\}]{6,128})[\"\\']?",
+      "flags": "i",
+      "description": "Catches password=, passwd=, pass=, passphrase= assignment patterns in logs and configuration files",
+      "examples": [
+        "password=SuperSecretPass123!",
+        "DB_PASSWORD: \"my_prod_password_99\""
+      ]
+    },
+    {
+      "id": "url_embedded_credentials",
+      "name": "URL-Embedded Username:Password Credentials",
+      "category": "credentials",
+      "severity": "critical",
+      "replacementTemplate": "[URL_CREDENTIALS_{INDEX}]",
+      "pattern": "(?:https?|ftp|ssh|sftp|redis|postgres|mysql|mongodb):\\/\\/([^\\s@:\\/]{2,64}:[^\\s@:\\/]{3,128})@",
+      "flags": "i",
+      "description": "Detects credentials embedded in URLs: scheme://user:password@host",
+      "examples": [
+        "postgres://dbuser:mypassword@db.internal:5432/main",
+        "https://admin:secret123@api.corp.local/v1"
+      ]
+    },
+    {
+      "id": "base64_encoded_secret",
+      "name": "Base64-Encoded Secret / Credential",
+      "category": "credentials",
+      "severity": "high",
+      "replacementTemplate": "[ENCODED_SECRET_{INDEX}]",
+      "pattern": "(?:secret|key|credential|token|password|auth)[\\s]*[=:][\\s]*[\"\\']?([A-Za-z0-9+/]{40,}={0,2})[\"\\']?",
+      "flags": "i",
+      "description": "Detects long base64-encoded strings likely representing encoded secrets or API keys (40+ chars of base64)",
+      "examples": [
+        "secret = \"c29tZS1zZWNyZXQta2V5LXZhbHVlLXRoYXQtaXMtdmVyeS1sb25nLWFuZC1iYXNlNjQtZW5jb2RlZA==\""
+      ]
+    },
+    {
+      "id": "uuid_v4",
+      "name": "UUID v4 Identifier",
+      "category": "pii",
+      "severity": "medium",
+      "replacementTemplate": "[UUID_{INDEX}]",
+      "pattern": "\\b[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\b",
+      "flags": "i",
+      "description": "Matches standard UUID v4 unique identifiers (used as user IDs, session tokens, transaction IDs)",
+      "examples": [
+        "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "c9a646d3-9c61-4cc9-bc55-e4b2a3d0d829"
+      ]
+    },
+    {
+      "id": "indian_pan_card",
+      "name": "Indian PAN Card Number",
+      "category": "pii",
+      "severity": "high",
+      "replacementTemplate": "[INDIA_PAN_{INDEX}]",
+      "pattern": "\\b[A-Z]{5}[0-9]{4}[A-Z]\\b",
+      "flags": "",
+      "description": "Matches 10-character Indian Permanent Account Number (PAN) cards",
+      "examples": [
+        "ABCDE1234F",
+        "BNZPK9876Q"
+      ]
+    },
+    {
+      "id": "indian_mobile_number",
+      "name": "Indian Mobile Phone Number",
+      "category": "pii",
+      "severity": "medium",
+      "replacementTemplate": "[IN_MOBILE_{INDEX}]",
+      "pattern": "(?:\\+91[-\\s]?)?(?:91[-\\s]?)?[6-9][0-9]{9}\\b",
+      "flags": "",
+      "description": "Matches Indian mobile numbers starting with 6-9 (10 digits) with optional +91 prefix",
+      "examples": [
+        "+91 9876543210",
+        "9876543210",
+        "+91-8123456789"
+      ]
+    },
+    {
+      "id": "json_name_field",
+      "name": "JSON \"name\" / \"fullName\" Field Value",
+      "category": "pii",
+      "severity": "high",
+      "replacementTemplate": "\"$KEY\": \"[NAME_{INDEX}]\"",
+      "pattern": "\"(?:name|fullName|full_name|firstName|first_name|lastName|last_name|displayName|display_name)\"\\s*:\\s*\"([A-Za-z\\s\\.\\']{3,60})\"",
+      "flags": "i",
+      "description": "Detects personal name values in structured JSON logs",
+      "examples": [
+        "\"fullName\": \"Jane Doe\"",
+        "\"displayName\": \"Robert Smith\""
+      ]
+    },
+    {
+      "id": "json_email_field",
+      "name": "JSON \"email\" Field Value",
+      "category": "pii",
+      "severity": "high",
+      "replacementTemplate": "\"$KEY\": \"[EMAIL_{INDEX}]\"",
+      "pattern": "\"(?:email|emailAddress|email_address|userEmail|user_email)\"\\s*:\\s*\"([^@\"]+@[^\"]+)\"",
+      "flags": "i",
+      "description": "Detects email address values embedded as JSON field values in structured log output",
+      "examples": [
+        "\"email\": \"user@example.com\"",
+        "\"email_address\": \"ceo@corp.internal\""
+      ]
+    },
+    {
+      "id": "json_user_id_field",
+      "name": "JSON \"userId\" / \"user_id\" Field Value",
+      "category": "pii",
+      "severity": "medium",
+      "replacementTemplate": "\"$KEY\": \"[USER_ID_{INDEX}]\"",
+      "pattern": "\"(?:userId|user_id|uid|customerId|customer_id|accountId|account_id|memberId|member_id)\"\\s*:\\s*\"([^\"]{3,64})\"",
+      "flags": "i",
+      "description": "Detects user ID values embedded in JSON log payloads",
+      "examples": [
+        "\"userId\": \"usr_99887766\"",
+        "\"customerId\": \"cust-abc-123\""
+      ]
+    },
+    {
+      "id": "url_with_token_param",
+      "name": "URL with Token / Key Query Parameter",
+      "category": "network",
+      "severity": "high",
+      "replacementTemplate": "[URL_WITH_TOKEN_{INDEX}]",
+      "pattern": "https?:\\/\\/[^\\s]+[?&](?:token|api_key|apikey|access_key|secret|auth|key)=[A-Za-z0-9_\\-.%+]{8,128}",
+      "flags": "i",
+      "description": "Detects URLs with embedded token, api_key, access_key, or secret query parameters",
+      "examples": [
+        "https://api.example.com/v1/data?token=eyJhbGciOiJIUzI1NiJ9",
+        "https://cdn.internal.net/files?api_key=ak_live_9988776655"
+      ]
+    },
+    {
+      "id": "internal_path_with_username",
+      "name": "File System Path with Username",
+      "category": "network",
+      "severity": "low",
+      "replacementTemplate": "[USER_PATH_{INDEX}]",
+      "pattern": "(?:/(?:home|Users|root|var/home)/([a-zA-Z][a-zA-Z0-9_.\\-]{1,32})|C:\\\\\\\\Users\\\\\\\\([a-zA-Z][a-zA-Z0-9_.\\-]{1,32}))",
+      "flags": "",
+      "description": "Detects file system paths exposing usernames (/home/username, C:\\Users\\username)",
+      "examples": [
+        "/home/jsmith/app/data.log",
+        "C:\\Users\\alice\\Documents\\secrets.txt"
+      ]
     }
-  ]
+  ],
+  "totalRules": 311,
+  "checksum": "sha256-3d6bb540c5a97ecabe9715627a379464df4b680333a6f2000848d522067bfd35"
 }

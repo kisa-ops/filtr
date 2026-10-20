@@ -7,7 +7,7 @@
     "pattern": "(?:(?:(?:\\+|00)966[- ]?|(?<!\\d)0)?5[0-9]{1}[- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[SAUDI_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+966 50 123 4567",
@@ -24,7 +24,7 @@
     "pattern": "(?:(?:(?:\\+|00)971[- ]?|(?<!\\d)0)?5[024568][- ]?[0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[UAE_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+971 50 123 4567",
@@ -41,7 +41,7 @@
     "pattern": "(?:(?:(?:\\+|00)974[- ]?)?[3567][0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[QATAR_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+974 3312 3456",
@@ -58,7 +58,7 @@
     "pattern": "(?:(?:(?:\\+|00)965[- ]?)?[569][0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[KUWAIT_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+965 5123 4567",
@@ -75,7 +75,7 @@
     "pattern": "(?:(?:(?:\\+|00)968[- ]?)?[79][0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[OMAN_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+968 9123 4567",
@@ -92,7 +92,7 @@
     "pattern": "(?:(?:(?:\\+|00)973[- ]?)?[36][0-9]{3}[- ]?[0-9]{4})\\b",
     "replacementTemplate": "[BAHRAIN_MOBILE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+973 3912 3456",
@@ -109,7 +109,7 @@
     "pattern": "(?:(?:\\+|00)(?:(?:966[- ]?5[0-9]|971[- ]?5[024568])[- ]?[0-9]{3}[- ]?[0-9]{4}|(?:974[- ]?[3567]|965[- ]?[569]|968[- ]?[79]|973[- ]?[36])[0-9]{3}[- ]?[0-9]{4}))\\b",
     "replacementTemplate": "[GCC_PHONE_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "+966 50 123 4567",
@@ -123,12 +123,12 @@
   {
     "id": "java_stack_trace_callsite",
     "name": "Java Stack Trace Line / Call Site",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches Java stack trace execution frames indicating package hierarchy, class, method, and source line numbers (including Java 9+ module prefixes).",
     "pattern": "\\bat\\s+(?:[a-zA-Z0-9_$.]+\\/)?[a-zA-Z_$][a-zA-Z0-9_$.]*\\.[a-zA-Z_$][a-zA-Z0-9_$]*\\((?:[a-zA-Z0-9_$]+\\.java:\\d+|Native\\s+Method|Unknown\\s+Source)\\)",
     "replacementTemplate": "[JAVA_STACK_TRACE]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "at com.corp.billing.PaymentService.processTransaction(PaymentService.java:142)",
@@ -139,12 +139,12 @@
   {
     "id": "java_exception_declaration",
     "name": "Java Exception Declaration & Root Cause",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches Java runtime exceptions, standard errors, and 'Caused by:' exception chain declarations in logs.",
     "pattern": "\\b(?:Exception in thread \\\"[^\\\"]*\\\"\\s+|Caused by:\\s+)?(?:[a-zA-Z_$][a-zA-Z0-9_$]*\\.)+(?:[a-zA-Z0-9_$]+Exception|[a-zA-Z0-9_$]+Error)(?::\\s+[^\\r\\n]*)?",
     "replacementTemplate": "[JAVA_EXCEPTION]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "java.lang.NullPointerException: Cannot invoke String.length() because str is null",
@@ -155,12 +155,12 @@
   {
     "id": "java_framework_stack_frame",
     "name": "Java Framework Stack Frame (Spring / Hibernate / Tomcat)",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches framework-specific internal traces (Spring Boot, Hibernate ORM, Apache Tomcat Catalina, HikariCP).",
     "pattern": "\\b(?:org\\.springframework|org\\.hibernate|org\\.apache\\.catalina|com\\.zaxxer\\.hikari|jakarta\\.persistence|org\\.jboss)\\.[a-zA-Z0-9_$.]+\\([a-zA-Z0-9_$]+\\.java:\\d+\\)",
     "replacementTemplate": "[FRAMEWORK_TRACE]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:334)",
@@ -171,12 +171,12 @@
   {
     "id": "java_jvm_oom_error",
     "name": "JVM OutOfMemoryError Alert",
-    "category": "custom",
+    "category": "devops",
     "description": "Detects Java Virtual Machine OutOfMemoryError notifications (Heap Space, Metaspace, GC Overhead Limit).",
     "pattern": "\\bjava\\.lang\\.OutOfMemoryError:\\s+(?:Java heap space|Metaspace|GC overhead limit exceeded|Direct buffer memory|Requested array size exceeds VM limit)\\b",
     "replacementTemplate": "[JVM_OOM_ALERT]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "java.lang.OutOfMemoryError: Java heap space",
@@ -192,7 +192,7 @@
     "pattern": "\\b(?:java\\.sql\\.SQLException|org\\.hibernate\\.exception\\.SQLGrammarException|org\\.postgresql\\.util\\.PSQLException|com\\.mysql\\.cj\\.jdbc\\.exceptions\\.[a-zA-Z]+)(?::\\s+[^\\r\\n]+)?",
     "replacementTemplate": "[SQL_EXCEPTION_LEAK]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "java.sql.SQLException: Access denied for user 'app_user'@'10.0.1.4' (using password: YES)",
@@ -203,13 +203,13 @@
   {
     "id": "java_thread_dump_header",
     "name": "Java JVM Thread Dump Header",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches JVM thread dump diagnostic declarations containing thread IDs, states, and native thread pointers.",
     "pattern": "^\\\"[^\\\"]+\\\"\\s+(?:#\\d+\\s+)?(?:daemon\\s+)?prio=\\d+\\s+os_prio=\\d+\\s+(?:cpu=[0-9.]+ms\\s+)?(?:elapsed=[0-9.]+s\\s+)?tid=0x[0-9a-fA-F]+\\s+nid=0x[0-9a-fA-F]+",
     "flags": "m",
     "replacementTemplate": "[JVM_THREAD_HEADER]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "\"http-nio-8080-exec-1\" #24 daemon prio=5 os_prio=0 cpu=120.45ms elapsed=42.10s tid=0x00007f9c8401a000 nid=0x1a2b",
@@ -219,12 +219,12 @@
   {
     "id": "angular_error_code",
     "name": "Angular Error Code (NG0xxx)",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches Angular runtime error diagnostic codes and descriptions (e.g. NG0100, NG0200, NG0201).",
     "pattern": "\\bNG0\\d{3,4}(?::\\s+[^\\r\\n]+)?",
     "replacementTemplate": "[ANGULAR_ERROR_CODE]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "NG0100: ExpressionChangedAfterItHasBeenCheckedError: Expression has changed after it was checked.",
@@ -235,12 +235,12 @@
   {
     "id": "angular_null_injector_error",
     "name": "Angular NullInjectorError / Missing Provider",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches Angular dependency injection failures, R3Injector traces, and missing token errors in console logs.",
     "pattern": "\\bNullInjectorError:\\s+R3InjectorError\\([^)]+\\)\\[[^\\]]+\\]:\\s+No provider for\\s+[A-Za-z0-9_$]+!?",
     "replacementTemplate": "[ANGULAR_INJECTOR_ERROR]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "NullInjectorError: R3InjectorError(AppModule)[AuthService -> HttpClient]: No provider for HttpClient!",
@@ -250,12 +250,12 @@
   {
     "id": "angular_expression_changed_error",
     "name": "Angular ExpressionChangedAfterItHasBeenCheckedError",
-    "category": "custom",
+    "category": "devops",
     "description": "Detects Angular change detection cycle discrepancies reporting previous vs current evaluated states.",
     "pattern": "\\bExpressionChangedAfterItHasBeenCheckedError:\\s+Previous value:\\s+'[^']*'\\.\\s+Current value:\\s+'[^']*'",
     "replacementTemplate": "[ANGULAR_EXPRESSION_ERROR]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "ExpressionChangedAfterItHasBeenCheckedError: Previous value: 'false'. Current value: 'true'. Expression has changed",
@@ -265,12 +265,12 @@
   {
     "id": "angular_zonejs_trace",
     "name": "Angular Zone.js Stack Trace Dump",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches internal Angular Zone.js asynchronous task tracking frames that clutter frontend console logs.",
     "pattern": "\\bat\\s+(?:(?:ZoneDelegate|ZoneTask|_ZoneDelegate)\\.[a-zA-Z0-9_$]+|drainMicroTaskQueue|timer|[a-zA-Z0-9_$]+)\\s*\\([^)]*zone(?:\\.umd)?\\.js:\\d+:\\d+\\)",
     "replacementTemplate": "[ZONEJS_STACK_TRACE]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "at ZoneDelegate.invokeTask (zone.js:406:31)",
@@ -281,12 +281,12 @@
   {
     "id": "angular_bundle_source_ref",
     "name": "Angular Webpack / Bundle Source Path Reference",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches Angular Webpack internal module paths and source map references exposing client directory layout.",
     "pattern": "(?<![\\w/])(?:webpack-internal:\\/\\/\\/|webpack:\\/\\/\\/|ng:\\/\\/\\/|\\.\\/src\\/app\\/)[a-zA-Z0-9_\\-\\/.]+\\.(?:ts|js|html)(?::\\d+:\\d+)?",
     "replacementTemplate": "[ANGULAR_SOURCE_PATH]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "webpack-internal:///./src/app/core/services/auth.service.ts:42:15",
@@ -297,12 +297,12 @@
   {
     "id": "angular_template_parse_error",
     "name": "Angular Template Compiler / Parse Error",
-    "category": "custom",
+    "category": "devops",
     "description": "Detects Angular Ahead-of-Time (AOT) and Just-in-Time (JIT) template compilation and element binding errors.",
     "pattern": "\\bTemplate parse errors:\\s*Can't bind to '[^']+' since it isn't a known property of '[^']+'",
     "replacementTemplate": "[ANGULAR_TEMPLATE_ERROR]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "Template parse errors: Can't bind to 'ngModel' since it isn't a known property of 'input'.",
@@ -317,7 +317,7 @@
     "pattern": "\\bhttps?:\\/\\/(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0):[0-9]{2,5}(?:\\/[^\\s\\\"'`]*)?",
     "replacementTemplate": "[DEV_LOCAL_URL_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "http://localhost:3000/api/v1/auth",
@@ -333,7 +333,7 @@
     "pattern": "\\b(?:10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}|172\\.(?:1[6-9]|2\\d|3[01])\\.\\d{1,3}\\.\\d{1,3})(?::\\d{2,5})?\\b",
     "replacementTemplate": "[PRIVATE_IP_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "10.0.4.15:8080",
@@ -350,7 +350,7 @@
     "pattern": "\\b[a-zA-Z0-9-_]+(?:\\.[a-zA-Z0-9-_]+)*\\.(?:local|internal|corp|lan|test|corp\\.internal|dev\\.internal)\\b(?::\\d{2,5})?",
     "replacementTemplate": "[DEV_INTERNAL_HOST_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "high",
     "examples": [
       "db-primary.prod.corp.internal:5432",
@@ -367,7 +367,7 @@
     "pattern": "\\bhttps?:\\/\\/[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.~%!$&'()*+,;=-]+@[a-zA-Z0-9_.-]+\\.[a-zA-Z]{2,}(?:\\/[^\\s\\\"'`]*)?",
     "replacementTemplate": "[GIT_AUTH_URL_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "https://oauth2:my_token_sample_12345@github.com/org/repo.git",
@@ -378,12 +378,12 @@
   {
     "id": "dev_git_commit_hash",
     "name": "Git Commit SHA Hash (SHA-1 / SHA-256)",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches 40-character SHA-1 or 64-character SHA-256 commit hashes and release shas in build and deployment logs.",
     "pattern": "\\b[0-9a-f]{40}\\b|\\b[0-9a-f]{64}\\b",
     "replacementTemplate": "[GIT_COMMIT_HASH_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "e4d909c290d0fb1ca068ffaddf22cbd0adddef19",
@@ -393,12 +393,12 @@
   {
     "id": "dev_local_filesystem_path",
     "name": "Developer Local Filesystem Absolute Path",
-    "category": "custom",
+    "category": "devops",
     "description": "Matches developer home directories and project paths across Linux, macOS, and Windows workstation environments.",
     "pattern": "(?:\\/(?:home|Users)\\/[a-zA-Z0-9_.-]+\\/[a-zA-Z0-9_\\-\\/.@]+|[a-zA-Z]:\\\\(?:Users|Projects|workspace|dev)\\\\[a-zA-Z0-9_\\-\\.\\\\]+)",
     "replacementTemplate": "[DEV_FILEPATH_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "medium",
     "examples": [
       "/home/john/projects/maskr/src/engine/rules.ts",
@@ -414,7 +414,7 @@
     "pattern": "\\b(?:jdbc:[a-z]+:\\/\\/|mongodb(?:\\+srv)?:\\/\\/|postgres(?:ql)?:\\/\\/|mysql:\\/\\/|redis:\\/\\/)[a-zA-Z0-9_.-]+:[^@\\s\\\"'<>]+@[a-zA-Z0-9_.-]+(?::\\d+)?(?:\\/[^\\s\\\"'`]*)?",
     "replacementTemplate": "[DATABASE_CONNECTION_URI_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "postgresql://postgres:MySecurePassword123@db.prod.internal:5432/customer_db",
@@ -430,7 +430,7 @@
     "pattern": "\\b(?:Authorization:\\s+)?(?:Bearer\\s+[a-zA-Z0-9_\\-\\.]{25,}|Basic\\s+[a-zA-Z0-9+\\/=]{16,})\\b",
     "replacementTemplate": "[AUTH_HEADER_TOKEN_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abcde",
@@ -446,7 +446,7 @@
     "pattern": "(?<![\\w/])(?:\\/\\/registry\\.npmjs\\.org\\/:_authToken=[^\\s\\\"'`]+|npm_[a-zA-Z0-9]{30,40}|pypi-AgEIcHlwaS5vcmc[a-zA-Z0-9_\\-]{30,})\\b",
     "replacementTemplate": "[PACKAGE_REGISTRY_TOKEN_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "//registry.npmjs.org/:_authToken=sample_registry_auth_token_value_12345",
@@ -462,7 +462,7 @@
     "pattern": "\\b(?:[A-Z0-9_]*(?:SECRET|PASSWORD|PASSWD|APIKEY|API_KEY|TOKEN|AUTH|CREDENTIAL)[A-Z0-9_]*)\\s*=\\s*['\\\"]?([^\\s'\\\"`]{8,})['\\\"]?",
     "replacementTemplate": "[ENV_SECRET_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "DATABASE_PASSWORD=SuperSecretPass123!",
@@ -478,7 +478,7 @@
     "pattern": "\\beyJ[a-zA-Z0-9_-]{10,}\\.eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_\\-]{10,}\\b",
     "replacementTemplate": "[JWT_TOKEN_{INDEX}]",
     "enabled": true,
-    "isCustom": true,
+    "isCustom": false,
     "severity": "critical",
     "examples": [
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"

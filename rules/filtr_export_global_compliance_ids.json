@@ -1,0 +1,51 @@
+{
+  "version": "2.0.1",
+  "packName": "Global Compliance National Identifiers Pack",
+  "description": "Detection rules for Australian TFN, French INSEE/NIR, and Spanish DNI/NIE.",
+  "totalRules": 3,
+  "rules": [
+    {
+      "id": "australian_tfn",
+      "name": "Australian Tax File Number (TFN)",
+      "category": "pii",
+      "description": "Matches 8 or 9-digit Australian Tax File Numbers",
+      "pattern": "\\b[0-9]{3}[-\\s]?[0-9]{3}[-\\s]?[0-9]{3}\\b",
+      "replacementTemplate": "[AUSTRALIA_TFN_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "123 456 789",
+        "987-654-321"
+      ]
+    },
+    {
+      "id": "french_insee_nir",
+      "name": "French National Identification (INSEE / NIR)",
+      "category": "pii",
+      "description": "Matches 13 or 15-digit French social security numbers (NIR/INSEE)",
+      "pattern": "\\b[12][0-9]{2}(?:0[1-9]|1[0-2])[0-9]{2}[0-9]{3}[0-9]{3}(?:[0-9]{2})?\\b",
+      "replacementTemplate": "[FRENCH_INSEE_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "1850575012345",
+        "292027512345678"
+      ]
+    },
+    {
+      "id": "spanish_dni_nie",
+      "name": "Spanish DNI / NIE National Identity Number",
+      "category": "pii",
+      "description": "Matches Spanish Documento Nacional de Identidad (DNI) and Foreigner NIE identifiers",
+      "pattern": "\\b[XYZxyz]?[0-9]{7,8}[A-Za-z]\\b",
+      "replacementTemplate": "[SPANISH_DNI_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "12345678Z",
+        "X1234567L"
+      ]
+    }
+  ],
+  "exportedAt": "2026-09-21T20:45:00Z"
+}

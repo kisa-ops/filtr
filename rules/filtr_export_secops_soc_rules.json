@@ -1,0 +1,78 @@
+{
+  "version": "2.0.1",
+  "packName": "SecOps & SOC Incident Response Pack",
+  "description": "Sanitization rules for Windows Security SIDs, Linux SHA-512 crypt hashes, Argon2 hashes, RFC 1918 private subnets, and AWS EC2 internal hostnames.",
+  "totalRules": 5,
+  "rules": [
+    {
+      "id": "windows_security_sid",
+      "name": "Windows Active Directory Security Identifier (SID)",
+      "category": "credentials",
+      "description": "Matches Windows NT and Active Directory Security Identifiers (SIDs)",
+      "pattern": "\\bS-1-(?:[0-5]|16|21)-[0-9\\-]+\\b",
+      "replacementTemplate": "[WINDOWS_SID_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "S-1-5-21-3623811015-3361044348-30300820-1013",
+        "S-1-5-18"
+      ]
+    },
+    {
+      "id": "password_hash_sha512crypt",
+      "name": "Linux SHA-512 Crypt Password Hash",
+      "category": "credentials",
+      "description": "Matches standard Linux /etc/shadow SHA-512 crypt password hashes starting with $6$",
+      "pattern": "\\$6\\$(?:rounds=[0-9]+\\$)?[a-zA-Z0-9\\.\\/]{1,16}\\$[a-zA-Z0-9\\.\\/]{86}",
+      "replacementTemplate": "[SHA512_CRYPT_HASH_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "$6$saltsalt$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEF"
+      ]
+    },
+    {
+      "id": "password_hash_argon2",
+      "name": "Argon2 Password Hash",
+      "category": "credentials",
+      "description": "Matches modern Argon2id, Argon2i, and Argon2d password hash strings",
+      "pattern": "\\$argon2(?:id?|d)\\$v=[0-9]+\\$m=[0-9]+,t=[0-9]+,p=[0-9]+\\$[a-zA-Z0-9+\\/]+\\$[a-zA-Z0-9+\\/]+",
+      "replacementTemplate": "[ARGON2_HASH_{INDEX}]",
+      "enabled": true,
+      "severity": "critical",
+      "examples": [
+        "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$9s/8RepBqNT4IFAnAhSfihjaRHigWvFsSmWmArJWjpQ"
+      ]
+    },
+    {
+      "id": "private_rfc1918_ip",
+      "name": "RFC 1918 Private IPv4 Subnet Address",
+      "category": "network",
+      "description": "Matches private RFC 1918 IPv4 addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)",
+      "pattern": "\\b(?:10\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|172\\.(?:1[6-9]|2[0-9]|3[01])\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|192\\.168\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\\b",
+      "replacementTemplate": "[PRIVATE_IP_{INDEX}]",
+      "enabled": false,
+      "severity": "medium",
+      "examples": [
+        "10.240.0.1",
+        "172.16.10.5",
+        "192.168.1.100"
+      ]
+    },
+    {
+      "id": "aws_private_ec2_hostname",
+      "name": "AWS Private EC2 Internal Hostname",
+      "category": "network",
+      "description": "Matches private AWS EC2 internal DNS hostnames (ip-10-x-x-x.compute.internal / ec2.internal)",
+      "pattern": "\\bip-(?:10|172-(?:1[6-9]|2[0-9]|3[01])|192-168)(?:-[0-9]+){3}(?:\\.[a-z0-9\\-]+)?\\.(?:compute|ec2)\\.internal\\b",
+      "replacementTemplate": "[AWS_INTERNAL_HOST_{INDEX}]",
+      "enabled": true,
+      "severity": "high",
+      "examples": [
+        "ip-10-0-1-25.ec2.internal",
+        "ip-172-16-5-10.us-east-1.compute.internal"
+      ]
+    }
+  ],
+  "exportedAt": "2026-09-21T20:45:00Z"
+}

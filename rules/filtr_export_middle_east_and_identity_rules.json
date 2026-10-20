@@ -1,0 +1,190 @@
+[
+  {
+    "id": "gcc_cchi_insurance_number",
+    "name": "Saudi Arabia CCHI Health Insurance Policy Number",
+    "category": "phi",
+    "severity": "critical",
+    "pattern": "\\b(?:cchi(?:[_\\s]*(?:num|policy|id))?)\\s*[:=#\\-]?\\s*([A-Z0-9]{7,15})\\b|\\bCCHI[-_][A-Z0-9]{5,12}\\b",
+    "flags": "i",
+    "replacementTemplate": "[CCHI_INSURANCE_ID]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Detects Saudi Council of Cooperative Health Insurance (CCHI) policy and member numbers.",
+    "examples": [
+      "CCHI_NUM: SA889201934",
+      "cchi_policy=98234112",
+      "CCHI-9923841"
+    ]
+  },
+  {
+    "id": "gcc_uae_health_insurance_id",
+    "name": "UAE Health Insurance Member ID (Daman / Thiqa / Enaya / Saada)",
+    "category": "phi",
+    "severity": "critical",
+    "pattern": "\\b(?:daman|thiqa|enaya|saada|dha[_-]?ins|nas[_-]?ins|mednet)\\s*(?:id|member|card|policy|no)?\\s*[:=#\\-]?\\s*([A-Z0-9]{6,16})\\b|\\b(?:DAMAN|THIQA|ENAYA|DHA)[-_][A-Z0-9]{6,12}\\b",
+    "flags": "i",
+    "replacementTemplate": "[UAE_HEALTH_INS_ID]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Matches health insurance card and member IDs from major UAE insurers (Daman, Thiqa, Enaya, Saada, DHA, NAS, Mednet).",
+    "examples": [
+      "daman_card_no: 9948210384",
+      "THIQA-8823102",
+      "enaya_member=EN902341"
+    ]
+  },
+  {
+    "id": "gcc_insurance_claim_number",
+    "name": "Middle East Insurance Claim Reference Number",
+    "category": "financial",
+    "severity": "critical",
+    "pattern": "\\b(?:claim(?:[_\\s]*(?:#|ref|no|num|number))?)\\s*[:=#\\-]?\\s*([A-Z0-9]{2,6}(?:[-_][0-9A-Z]{3,8}){1,2}|[0-9]{8,14})\\b",
+    "flags": "i",
+    "replacementTemplate": "[INSURANCE_CLAIM_REF]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Identifies insurance claim tracking and reference numbers used by Middle East insurance providers and TPAs.",
+    "examples": [
+      "claim_ref: CLM-2026-90412",
+      "claim_no=9988214309",
+      "claim# DXB-88319"
+    ]
+  },
+  {
+    "id": "gcc_unified_number_uid",
+    "name": "UAE Unified Identification Number (UID)",
+    "category": "pii",
+    "severity": "critical",
+    "pattern": "\\b(?:unified(?:[_\\s]*(?:number|no|num|id))?|uid)\\s*[:=#\\-]?\\s*([0-9]{6,9})\\b|\\bUID[-_][0-9]{6,9}\\b",
+    "flags": "i",
+    "replacementTemplate": "[UAE_UID]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Matches UAE Unified Identification Numbers (UID) assigned to residents and used in national insurance indexing.",
+    "examples": [
+      "unified_id: 10928374",
+      "UID: 982341",
+      "UID-8839210"
+    ]
+  },
+  {
+    "id": "person_name_contextual",
+    "name": "Full / First / Last Name Contextual Field",
+    "category": "pii",
+    "severity": "high",
+    "pattern": "\\b(?:full[_-]?name|first[_-]?name|last[_-]?name|patient[_-]?name|insured[_-]?name|beneficiary[_-]?name|claimant[_-]?name|employee[_-]?name|member[_-]?name|client[_-]?name|customer[_-]?name|subscriber[_-]?name|student[_-]?name|passenger[_-]?name|doctor[_-]?name|physician[_-]?name|candidate[_-]?name|contact[_-]?name|name)\\s*[:=]\\s*([A-Z][a-z]+(?:\\s+[A-Z][a-z]+){1,3})\\b",
+    "flags": "i",
+    "replacementTemplate": "[PERSON_NAME]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Detects personal names preceded by explicit form/data field labels (e.g. name:, patient_name:, insured_name:).",
+    "examples": [
+      "patient_name: Mohammed Al Mansoori",
+      "full_name=Fatima Zahra",
+      "insured_name: John Smith"
+    ]
+  },
+  {
+    "id": "person_name_salutation",
+    "name": "Personal Name with Formal Salutation or Middle East Honorific",
+    "category": "pii",
+    "severity": "high",
+    "pattern": "\\b(?:Mr\\.|Mrs\\.|Ms\\.|Miss|Dr\\.|Prof\\.|Eng\\.|Sheikh|Sheikha|Sayyid|Sayyida|H\\.E\\.|H\\.R\\.H\\.)\\s+([A-Z][a-z]+(?:\\s+(?:Al[- ])?[A-Z][a-z]+){1,3})\\b",
+    "flags": "",
+    "replacementTemplate": "[PERSON_NAME]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Matches names following honorifics and professional titles common internationally and across the Middle East (Dr., Eng., Sheikh, etc.).",
+    "examples": [
+      "Dr. Tariq Al Hashimi",
+      "Sheikh Mansoor Al Nahyan",
+      "Eng. Sarah Jenkins",
+      "Mr. David Miller"
+    ]
+  },
+  {
+    "id": "person_name_display_name",
+    "name": "Directory / Identity Display Name (displayName / cn)",
+    "category": "pii",
+    "severity": "high",
+    "pattern": "\\b(?:display[_-]?name|cn|user[_-]?display[_-]?name)\\s*[:=]\\s*['\\\"]?([A-Z][a-z]+(?:\\s+[A-Z][a-z]+){1,3})['\\\"]?",
+    "flags": "i",
+    "replacementTemplate": "[DISPLAY_NAME]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Detects display name attributes commonly populated in LDAP, Active Directory, Azure AD/Entra ID, and OAuth profiles.",
+    "examples": [
+      "displayName: Khalid Al Qasimi",
+      "cn=Zaid Ibrahim",
+      "user_display_name: Emily Watson"
+    ]
+  },
+  {
+    "id": "ad_samaccountname_domain",
+    "name": "Active Directory Down-Level Logon Name (DOMAIN\\Username)",
+    "category": "credentials",
+    "severity": "high",
+    "pattern": "\\b[A-Za-z0-9_\\-\\.]{2,15}\\\\[A-Za-z0-9_\\-\\.]{2,30}\\b",
+    "flags": "",
+    "replacementTemplate": "[AD_DOMAIN_USER]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Detects NetBIOS/Active Directory domain backslash username paths (e.g., ADCORP\\jsmith, CONTOSO\\tariq.a).",
+    "examples": [
+      "CORPAD\\jsmith",
+      "EMIRATES\\khalid.a",
+      "MEINSURE\\claim_svc"
+    ]
+  },
+  {
+    "id": "ad_user_principal_name",
+    "name": "Active Directory User Principal Name (UPN / Internal Corporate Realm)",
+    "category": "credentials",
+    "severity": "high",
+    "pattern": "\\b[a-zA-Z0-9_\\-\\.]{2,30}@(corp|internal|local|lan|priv|intranet|enterprise|domain)\\.[a-zA-Z]{2,6}\\b|\\b[a-zA-Z0-9_\\-\\.]{2,30}@[a-zA-Z0-9_\\-]+\\.(?:local|corp|internal|lan)\\b",
+    "flags": "i",
+    "replacementTemplate": "[AD_UPN_ACCOUNT]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Detects User Principal Names (UPNs) targeting internal Active Directory and private enterprise domain suffixes.",
+    "examples": [
+      "jsmith@corp.contoso.com",
+      "ahmed.k@ad.internal",
+      "svc-deploy@domain.local"
+    ]
+  },
+  {
+    "id": "ad_username_contextual",
+    "name": "Active Directory sAMAccountName / User ID Contextual Field",
+    "category": "credentials",
+    "severity": "high",
+    "pattern": "\\b(?:sAMAccountName|user[_-]?name|user[_-]?id|logon[_-]?name|login[_-]?id|ad[_-]?user|nt[_-]?user)\\s*[:=]\\s*['\\\"]?([a-zA-Z0-9_\\.\\-]{3,25})['\\\"]?",
+    "flags": "i",
+    "replacementTemplate": "[AD_USERNAME]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Matches Active Directory sAMAccountName and corporate login ID assignment fields in configs, LDAP exports, and logs.",
+    "examples": [
+      "sAMAccountName=jsmith",
+      "user_id: malmansoori",
+      "logon_name: t_hashimi"
+    ]
+  },
+  {
+    "id": "corporate_username_standard_formats",
+    "name": "Corporate Username Standard Format (first.last / flast)",
+    "category": "credentials",
+    "severity": "medium",
+    "pattern": "\\b(?:user|account|login|author|owner)\\s*[:=]\\s*([a-z]{1,2}\\.[a-z]{2,20}|[a-z]{2,20}\\.[a-z]{2,20}|[a-z][a-z0-9]{2,15})\\b",
+    "flags": "i",
+    "replacementTemplate": "[CORP_USERNAME]",
+    "isCustom": false,
+    "enabled": true,
+    "description": "Captures universal corporate username conventions (initial.lastname, firstname.lastname, or alphanumeric handles) with key identifier context.",
+    "examples": [
+      "user: j.smith",
+      "account=tariq.mansoor",
+      "login: anand.s"
+    ]
+  }
+]
